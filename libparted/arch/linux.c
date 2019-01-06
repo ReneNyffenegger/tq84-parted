@@ -37,7 +37,8 @@
 #include <dirent.h>
 #include <sys/ioctl.h>
 #include <sys/stat.h>
-#include <sys/types.h>
+// #include <sys/types.h>
+#include <sys/sysmacros.h>
 #include <sys/utsname.h>        /* for uname() */
 #include <scsi/scsi.h>
 #include <assert.h>
@@ -82,6 +83,10 @@
 #define RD_MODE (O_RDONLY)
 #define WR_MODE (O_WRONLY)
 #define RW_MODE (O_RDWR)
+
+#define TQ84_DEBUG_ENABLED
+#define TQ84_DEBUG_TO_FILE
+#include "../../../tq84-c-debug/tq84_debug.h"
 
 struct hd_geometry {
         unsigned char heads;
@@ -347,6 +352,8 @@ _major_type_in_devices (int major, const char* type)
         int bd = 0;
         char c;
 
+        TQ84_DEBUG_INDENT_T("_major_type_in_devices");
+
         fd = open ("/proc/devices", O_RDONLY);
         if (fd < 0)
                 return 0;
@@ -516,6 +523,7 @@ _probe_dm_devices ()
 static int
 _device_stat (PedDevice* dev, struct stat * dev_stat)
 {
+        TQ84_DEBUG_INDENT_T("_device_stat");
         PED_ASSERT (dev != NULL);
         PED_ASSERT (!dev->external_mode);
 
@@ -541,6 +549,7 @@ _device_probe_type (PedDevice* dev)
         struct stat             dev_stat;
         int                     dev_major;
         int                     dev_minor;
+//      TQ84_DEBUG_INDENT_T("_device_probe_type");
         LinuxSpecific*          arch_specific = LINUX_SPECIFIC (dev);
 
         if (!_device_stat (dev, &dev_stat))
@@ -553,6 +562,8 @@ _device_probe_type (PedDevice* dev)
 
         arch_specific->major = dev_major = major (dev_stat.st_rdev);
         arch_specific->minor = dev_minor = minor (dev_stat.st_rdev);
+
+        TQ84_DEBUG("major = %d, minor = %d", arch_specific->major, arch_specific->minor);
 
         if (SCSI_BLK_MAJOR (dev_major) && (dev_minor % 0x10 == 0)) {
                 dev->type = PED_DEVICE_SCSI;
@@ -1292,6 +1303,8 @@ linux_new (const char* path)
         PedDevice*      dev;
         LinuxSpecific*  arch_specific;
 
+        TQ84_DEBUG_INDENT_T("linux_new, path = %s", path);
+
         PED_ASSERT (path != NULL);
 
         dev = (PedDevice*) ped_malloc (sizeof (PedDevice));
@@ -1324,11 +1337,14 @@ linux_new (const char* path)
 
         switch (dev->type) {
         case PED_DEVICE_IDE:
+                 
+                TQ84_DEBUG("PED_DEVICE_IDE");
                 if (!init_ide (dev))
                         goto error_free_arch_specific;
                 break;
 
         case PED_DEVICE_SCSI:
+                TQ84_DEBUG("PED_DEVICE_SCSI");
                 if (!init_scsi (dev))
                         goto error_free_arch_specific;
                 break;
@@ -1381,6 +1397,7 @@ linux_new (const char* path)
                 break;
 
         case PED_DEVICE_FILE:
+                TQ84_DEBUG("PED_DEVICE_FILE");
                 if (!init_file (dev))
                         goto error_free_arch_specific;
                 break;
@@ -1542,11 +1559,13 @@ static int
 linux_open (PedDevice* dev)
 {
         LinuxSpecific*  arch_specific = LINUX_SPECIFIC (dev);
+        TQ84_DEBUG_INDENT_T("linux_open, dev->path = %s", dev->path);
 
 retry:
         arch_specific->fd = open (dev->path, RW_MODE);
 
         if (arch_specific->fd == -1) {
+                TQ84_DEBUG("fd is -1");
                 char*   rw_error_msg = strerror (errno);
 
                 arch_specific->fd = open (dev->path, RD_MODE);
@@ -1700,6 +1719,7 @@ static int
 linux_read (const PedDevice* dev, void* buffer, PedSector start,
             PedSector count)
 {
+        TQ84_DEBUG_INDENT_T("linux_read, start = %lld, count = %lld", start, count);
         LinuxSpecific*          arch_specific = LINUX_SPECIFIC (dev);
         PedExceptionOption      ex_status;
         void*                   diobuf = NULL;
@@ -1708,6 +1728,7 @@ linux_read (const PedDevice* dev, void* buffer, PedSector start,
         PED_ASSERT (dev->sector_size % PED_SECTOR_SIZE_DEFAULT == 0);
 
         if (_get_linux_version() < KERNEL_VERSION (2,6,0)) {
+                TQ84_DEBUG("linux version < 2,6,6");
                 /* Kludge.  This is necessary to read/write the last
                    block of an odd-sized disk, until Linux 2.5.x kernel fixes.
                 */
@@ -2193,6 +2214,7 @@ _probe_standard_devices ()
 static void
 linux_probe_all ()
 {
+        TQ84_DEBUG_INDENT_T("linux_probe_all");
         /* we should probe the standard devs too, even with /proc/partitions,
          * because /proc/partitions might return devfs stuff, and we might not
          * have devfs available
@@ -2417,6 +2439,7 @@ static bool
 _sysfs_int_entry_from_dev(PedDevice const* dev, const char *entry, int *val)
 {
         char        path[128];
+        TQ84_DEBUG_INDENT_T("_sysfs_int_entry_from_dev");
         int r = snprintf(path, sizeof(path), "/sys/block/%s/%s",
 			 last_component(dev->path), entry);
         if (r < 0 || r >= sizeof(path))
@@ -2441,6 +2464,7 @@ _sysfs_ull_entry_from_part(PedPartition const* part, const char *entry,
                            unsigned long long *val)
 {
         char path[128];
+        TQ84_DEBUG_INDENT_T("_sysfs_ull_entry_from_part");
         char *part_name = linux_partition_get_path(part);
         if (!part_name)
                 return false;
@@ -2472,6 +2496,8 @@ _kernel_get_partition_start_and_length(PedPartition const *part,
                                        unsigned long long *start,
                                        unsigned long long *length)
 {
+
+        TQ84_DEBUG_INDENT_T("_kernel_get_partition_start_and_length");
         PED_ASSERT(part);
         PED_ASSERT(start);
         PED_ASSERT(length);
@@ -2530,6 +2556,7 @@ static unsigned int
 _device_get_partition_range(PedDevice const* dev)
 {
         int range;
+        TQ84_DEBUG_INDENT_T("_device_get_partition_range");
         bool ok = _sysfs_int_entry_from_dev(dev, "ext_range", &range);
 
         if (!ok)

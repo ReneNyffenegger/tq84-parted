@@ -47,6 +47,10 @@
 
 #include "architecture.h"
 
+#define TQ84_DEBUG_ENABLED
+#define TQ84_DEBUG_TO_FILE
+#include "../../tq84-c-debug/tq84_debug.h"
+
 static PedDevice*	devices; /* legal advice says: initialized to NULL,
 				    under section 6.7.8 part 10
 				    of ISO/EIC 9899:1999 */
@@ -55,6 +59,7 @@ static void
 _device_register (PedDevice* dev)
 {
 	PedDevice*	walk;
+  TQ84_DEBUG_INDENT_T("_device_register, dev->path = %s", dev->path);
 	for (walk = devices; walk && walk->next; walk = walk->next);
 	if (walk)
 		walk->next = dev;
@@ -99,6 +104,7 @@ _device_unregister (PedDevice* dev)
 PedDevice*
 ped_device_get_next (const PedDevice* dev)
 {
+  TQ84_DEBUG_INDENT_T("ped_device_get_next");
 	if (dev)
 		return dev->next;
 	else
@@ -109,6 +115,8 @@ void
 _ped_device_probe (const char* path)
 {
 	PedDevice*	dev;
+
+  TQ84_DEBUG_INDENT_T("_ped_device_probe");
 
 	PED_ASSERT (path != NULL);
 
@@ -125,6 +133,7 @@ _ped_device_probe (const char* path)
 void
 ped_device_probe_all ()
 {
+  TQ84_DEBUG_INDENT_T("ped_device_probe_all");
 	ped_architecture->dev_ops->probe_all ();
 }
 
@@ -149,12 +158,15 @@ PedDevice*
 ped_device_get (const char* path)
 {
 	PedDevice*	walk;
+  TQ84_DEBUG_INDENT_T("ped_device_get, path = %s", path);
 	char*		normal_path = NULL;
 
 	PED_ASSERT (path != NULL);
 	/* Don't canonicalize /dev/mapper paths, see tests/symlink.c */
 	if (strncmp (path, "/dev/mapper/", 12))
 		normal_path = canonicalize_file_name (path);
+
+  TQ84_DEBUG("normal_path = %s", normal_path);
 	if (!normal_path)
 		/* Well, maybe it is just that the file does not exist.
 		 * Try it anyway.  */
@@ -162,18 +174,23 @@ ped_device_get (const char* path)
 	if (!normal_path)
 		return NULL;
 
+  TQ84_DEBUG("for walk = devices");
 	for (walk = devices; walk != NULL; walk = walk->next) {
 		if (!strcmp (walk->path, normal_path)) {
 			free (normal_path);
+      TQ84_DEBUG("return walk (1)");
 			return walk;
 		}
 	}
 
+  TQ84_DEBUG("walk = ped_architecture->dev_ops->_new");
 	walk = ped_architecture->dev_ops->_new (normal_path);
 	free (normal_path);
 	if (!walk)
 		return NULL;
+  TQ84_DEBUG("_device_register");
 	_device_register (walk);
+  TQ84_DEBUG("return walk (2)");
 	return walk;
 }
 

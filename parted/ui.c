@@ -68,6 +68,7 @@ extern int tgetnum (char* key);
 #ifndef SA_SIGINFO
 #  ifndef HAVE_SIGACTION
 
+
 struct sigaction {
 };
 
@@ -78,11 +79,16 @@ sigaction (int signum, const struct* sigaction, struct* sigaction)
 
 #  endif /* HAVE_SIGACTON */
 
+
 struct siginfo_t {
         int si_code;
 };
 
 #endif /* SA_SIGINFO */
+
+#define TQ84_DEBUG_ENABLED
+#define TQ84_DEBUG_TO_FILE
+#include "../../tq84-c-debug/tq84_debug.h"
 
 #ifndef SEGV_MAPERR
 #  define SEGV_MAPERR (INTMAX - 1)
@@ -551,6 +557,7 @@ static char*
 _readline (const char* prompt, const StrList* possibilities)
 {
         char*    line;
+        TQ84_DEBUG_INDENT_T("_readline");
 
         readline_state.possibilities = possibilities;
         readline_state.cur_pos = NULL;
@@ -596,6 +603,7 @@ static PedExceptionOption _GL_ATTRIBUTE_PURE
 option_get_next (PedExceptionOption options, PedExceptionOption current)
 {
         PedExceptionOption    i;
+        TQ84_DEBUG_INDENT_T("option_get_next");
 
         if (current == 0)
                 i = PED_EXCEPTION_OPTION_FIRST;
@@ -672,6 +680,8 @@ command_line_pop_word ()
         char*       result;
         StrList*    next;
 
+        TQ84_DEBUG_INDENT_T("command_line_pop_word");
+
         PED_ASSERT (command_line != NULL);
 
         result = str_list_convert_node (command_line);
@@ -692,6 +702,7 @@ command_line_flush ()
 char*
 command_line_peek_word ()
 {
+        TQ84_DEBUG_INDENT_T("command_line_peek_word");
         if (command_line)
                 return str_list_convert_node (command_line);
         else
@@ -701,6 +712,7 @@ command_line_peek_word ()
 int
 command_line_get_word_count ()
 {
+        TQ84_DEBUG_INDENT_T("command_line_get_word_count");
         return str_list_length (command_line);
 }
 
@@ -1484,6 +1496,7 @@ init_readline (void)
 int
 init_ui ()
 {
+        TQ84_DEBUG_INDENT_T("init_ui");
         if (!init_ex_opt_str ()
             || !init_state_str ()
             || !init_alignment_type_str ()
@@ -1528,6 +1541,7 @@ init_ui ()
 void
 done_ui ()
 {
+        TQ84_DEBUG_INDENT_T("done_ui");
         ped_exception_set_handler (NULL);
         done_ex_opt_str ();
         done_state_str ();
@@ -1557,6 +1571,8 @@ help_msg ()
 void
 print_using_dev (PedDevice* dev)
 {
+        TQ84_DEBUG_INDENT_T("print_using_dev");
+        TQ84_DEBUG("dev->path = %s", dev->path);
         printf (_("Using %s\n"), dev->path);
 }
 
@@ -1564,6 +1580,7 @@ int
 interactive_mode (PedDevice** dev, Command* cmd_list[])
 {
         StrList*    list;
+        TQ84_DEBUG_INDENT_T("interactive_mode");
         StrList*    command_names = command_get_names (cmd_list);
 
         commands = cmd_list;    /* FIXME yucky, nasty, evil hack */
@@ -1580,6 +1597,7 @@ interactive_mode (PedDevice** dev, Command* cmd_list[])
                 char*       word;
                 Command*    cmd;
 
+                TQ84_DEBUG_INDENT_T("while !command_line_get_word_count");
                 while (!command_line_get_word_count ()) {
                         if (feof (stdin)) {
                                 putchar ('\n');
@@ -1590,6 +1608,7 @@ interactive_mode (PedDevice** dev, Command* cmd_list[])
                 }
 
                 word = command_line_pop_word ();
+                TQ84_DEBUG_INDENT_T("if word");
                 if (word) {
                         cmd = command_get (commands, word);
                         free (word);
@@ -1611,6 +1630,8 @@ non_interactive_mode (PedDevice** dev, Command* cmd_list[],
 {
         int         i;
         Command*    cmd;
+
+        TQ84_DEBUG_INDENT_T("non_interactive_mode");
 
         commands = cmd_list;    /* FIXME yucky, nasty, evil hack */
 

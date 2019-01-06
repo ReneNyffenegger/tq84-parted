@@ -49,6 +49,10 @@
 #  define N_(String) (String)
 #endif /* ENABLE_NLS */
 
+#define TQ84_DEBUG_ENABLED
+#define TQ84_DEBUG_TO_FILE
+#include "../../tq84-c-debug/tq84_debug.c"
+
 /* UPDATE MODE functions */
 #ifdef DEBUG
 static int _disk_check_sanity (PedDisk* disk);
@@ -67,6 +71,7 @@ static PedDiskType*	disk_types = NULL;
 void
 ped_disk_type_register (PedDiskType* disk_type)
 {
+//TQ84_DEBUG_INDENT_T("ped_disk_type_register");
 	PED_ASSERT (disk_type != NULL);
 	PED_ASSERT (disk_type->ops != NULL);
 	PED_ASSERT (disk_type->name != NULL);
@@ -180,6 +185,7 @@ ped_disk_new (PedDevice* dev)
 {
 	PedDiskType*	type;
 	PedDisk*	disk;
+  TQ84_DEBUG_INDENT_T("ped_disk_new");
 
 	PED_ASSERT (dev != NULL);
 
@@ -654,6 +660,8 @@ int
 ped_disk_type_check_feature (const PedDiskType* disk_type,
 			     PedDiskTypeFeature feature)
 {
+
+  TQ84_DEBUG_INDENT_T("ped_disk_type_check_feature");
 	return (disk_type->features & feature) != 0;
 }
 
@@ -664,6 +672,7 @@ int
 ped_disk_get_primary_partition_count (const PedDisk* disk)
 {
 	PedPartition*	walk;
+  TQ84_DEBUG_INDENT_T("ped_disk_get_primary_partition_count");
 	int		count = 0;
 
 	PED_ASSERT (disk != NULL);
@@ -686,6 +695,7 @@ ped_disk_get_last_partition_num (const PedDisk* disk)
 {
 	PedPartition*	walk;
 	int		highest = -1;
+  TQ84_DEBUG_INDENT_T("ped_disk_get_last_partition_num");
 
 	PED_ASSERT (disk != NULL);
 

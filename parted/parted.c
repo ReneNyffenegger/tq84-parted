@@ -66,6 +66,10 @@
 /* minimum amount of free space to leave, or maximum amount to gobble up */
 #define MIN_FREESPACE           (1000 * 2)      /* 1000k */
 
+#define TQ84_DEBUG_ENABLED
+#define TQ84_DEBUG_TO_FILE
+#include "../../tq84-c-debug/tq84_debug.h"
+
 static int MEGABYTE_SECTORS (PedDevice* dev)
 {
         return PED_MEGABYTE_SIZE / dev->sector_size;
@@ -889,6 +893,7 @@ partition_print_flags (PedPartition const *part)
 static int
 partition_print (PedPartition* part)
 {
+  TQ84_DEBUG_INDENT_T("partition_print");
         return 1;
 }
 
@@ -896,6 +901,7 @@ static char*
 disk_print_flags (PedDisk const *disk)
 {
   char *res = xstrdup ("");
+  TQ84_DEBUG_INDENT_T("disk_print_flags");
   if (!disk)
     return res;
 
@@ -916,6 +922,7 @@ disk_print_flags (PedDisk const *disk)
         }
     }
 
+  TQ84_DEBUG("returning %s", res);
   return res;
 }
 
@@ -923,6 +930,8 @@ static void
 _print_disk_geometry (const PedDevice *dev)
 {
         PED_ASSERT (dev != NULL);
+
+        TQ84_DEBUG_INDENT_T("_print_disk_geometry");
         const PedCHSGeometry* chs = &dev->bios_geom;
         char* cyl_size = ped_unit_format_custom (dev,
                                 chs->heads * chs->sectors,
@@ -943,6 +952,7 @@ _print_disk_geometry (const PedDevice *dev)
 static void
 _print_disk_info (const PedDevice *dev, const PedDisk *disk)
 {
+        TQ84_DEBUG_INDENT_T("_print_disk_info");
         char const *const transport[] = {"unknown", "scsi", "ide", "dac960",
                                          "cpqarray", "file", "ataraid", "i2o",
                                          "ubd", "dasd", "viodasd", "sx8", "dm",
@@ -950,6 +960,7 @@ _print_disk_info (const PedDevice *dev, const PedDisk *disk)
                                          "md", "loopback"};
 
         char* start = ped_unit_format (dev, 0);
+        TQ84_DEBUG("start = %s", start);
         PedUnit default_unit = ped_unit_get_default ();
         char* end = ped_unit_format_byte (dev, dev->length * dev->sector_size
                                     - (default_unit == PED_UNIT_CHS ||
@@ -1014,7 +1025,10 @@ do_print (PedDevice** dev)
         wchar_t*        table_rendered;
         int ok = 1; /* default to success */
 
+        TQ84_DEBUG_INDENT_T("do_print");
+
         peek_word = command_line_peek_word ();
+        TQ84_DEBUG("peek_word = %s", peek_word);
         if (peek_word) {
                 if (strncmp (peek_word, "devices", 7) == 0) {
                         char *w = command_line_pop_word();
@@ -1039,6 +1053,7 @@ do_print (PedDevice** dev)
         }
 
         if (!has_devices_arg && !has_list_arg) {
+                TQ84_DEBUG("has_devices_arg");
                 disk = ped_disk_new (*dev);
                 /* Returning NULL here is an indication of failure, when in
                    script mode.  Otherwise (interactive mode) it may indicate
@@ -1096,6 +1111,7 @@ do_print (PedDevice** dev)
                 return status;
         }
 
+        TQ84_DEBUG("call _print_disk_info");
         _print_disk_info (*dev, disk);
         if (!disk)
                 goto nopt;
@@ -1967,6 +1983,7 @@ static void
 _done_commands ()
 {
 Command**       walk;
+  TQ84_DEBUG_INDENT_T("_done_commands");
 
 for (walk = commands; *walk; walk++) {
         command_destroy (*walk);
@@ -1997,6 +2014,8 @@ _parse_options (int* argc_ptr, char*** argv_ptr)
 {
 int     opt, help = 0, list = 0, version = 0, wrong = 0;
 
+  TQ84_DEBUG_INDENT_T("_parse_options");
+
 while (1)
 {
         opt = getopt_long (*argc_ptr, *argv_ptr, "hlmsva:",
@@ -2008,7 +2027,7 @@ while (1)
                 case 'h': help = 1; break;
                 case 'l': list = 1; break;
                 case 'm': opt_machine_mode = 1; break;
-                case 's': opt_script_mode = 1; break;
+                case 's': TQ84_DEBUG("option s given, setting opt_script_mode = 1"); opt_script_mode = 1; break;
                 case 'v': version = 1; break;
                 case 'a':
                   alignment = XARGMATCH ("--align", optarg,
@@ -2054,15 +2073,18 @@ static PedDevice*
 _choose_device (int* argc_ptr, char*** argv_ptr)
 {
 PedDevice*      dev;
+  TQ84_DEBUG_INDENT_T("_choose_device");
 
 /* specified on comand line? */
 if (*argc_ptr) {
+        TQ84_DEBUG("*argc_ptr");
         dev = ped_device_get ((*argv_ptr) [0]);
         if (!dev)
                 return NULL;
         (*argc_ptr)--;
         (*argv_ptr)++;
 } else {
+        TQ84_DEBUG("! *argc_ptr");
 retry:
         ped_device_probe_all ();
         dev = ped_device_get_next (NULL);
@@ -2086,6 +2108,7 @@ static PedDevice*
 _init (int* argc_ptr, char*** argv_ptr)
 {
 PedDevice*      dev;
+  TQ84_DEBUG_INDENT_T("_init");
 
 #ifdef ENABLE_MTRACE
 mtrace();
@@ -2100,9 +2123,11 @@ _init_commands ();
 if (!_parse_options (argc_ptr, argv_ptr))
         goto error_done_commands;
 
-if (!opt_script_mode)
+if (!opt_script_mode) {
+        TQ84_DEBUG("! opt_script_mode");
         if (init_readline ())
                 goto error_done_commands;
+}
 
 #ifdef HAVE_GETUID
         if (getuid() != 0 && !opt_script_mode) {
@@ -2111,6 +2136,7 @@ if (!opt_script_mode)
         }
 #endif
 
+TQ84_DEBUG("dev = _choose_device");
 dev = _choose_device (argc_ptr, argv_ptr);
 if (!dev)
         goto error_done_commands;
@@ -2120,6 +2146,7 @@ if (!g_timer)
         goto error_done_commands;
 timer_context.last_update = 0;
 
+TQ84_DEBUG("return dev");
 return dev;
 
 error_done_commands:
@@ -2161,6 +2188,9 @@ main (int argc, char** argv)
         PedDevice*      dev;
         int             status;
 
+        tq84_debug_open("/tmp/parted.out" , "w");
+        TQ84_DEBUG_INDENT_T("main");
+
         set_program_name (argv[0]);
         atexit (close_stdout);
 
@@ -2168,11 +2198,21 @@ main (int argc, char** argv)
         if (!dev)
                 return 1;
 
-        if (argc || opt_script_mode)
-                status = non_interactive_mode (&dev, commands, argc, argv);
-        else
-                status = interactive_mode (&dev, commands);
+        TQ84_DEBUG("dev->model             = %s", dev->model           );
+        TQ84_DEBUG("dev->path              = %s", dev->path            );
+        TQ84_DEBUG("dev->sector_size       = %d", dev->sector_size     );
+        TQ84_DEBUG("dev->phys_sector_size  = %d", dev->phys_sector_size);
 
+        if (argc || opt_script_mode) {
+                TQ84_DEBUG("call non_interactive_mode");
+                status = non_interactive_mode (&dev, commands, argc, argv);
+        }
+        else {
+                TQ84_DEBUG("call interactive_mode");
+                status = interactive_mode (&dev, commands);
+        }
+
+        TQ84_DEBUG("call _done");
         _done (dev);
 
         return !status;

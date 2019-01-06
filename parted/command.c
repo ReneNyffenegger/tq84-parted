@@ -26,6 +26,10 @@
 #include <string.h>
 #include "xalloc.h"
 
+#define TQ84_DEBUG_ENABLED
+#define TQ84_DEBUG_TO_FILE
+#include "../../tq84-c-debug/tq84_debug.h"
+
 Command*
 command_create (const StrList* names,
 		int (*method) (PedDevice** dev),
@@ -34,6 +38,8 @@ command_create (const StrList* names,
                 const int non_interactive)
 {
 	Command*	cmd;
+
+  TQ84_DEBUG_INDENT_T("command_create");
 
 	cmd = xmalloc (sizeof (Command));
 
@@ -118,6 +124,7 @@ command_get_names (Command** list)
 void
 command_print_summary (Command* cmd)
 {
+        TQ84_DEBUG_INDENT_T("command_print_summary");
         fputs ("  ", stdout);
 	str_list_print_wrap (cmd->summary, screen_width(), 2, 8, stdout);
 	putchar ('\n');
@@ -136,5 +143,6 @@ command_print_help (Command* cmd)
 int
 command_run (Command* cmd, PedDevice** dev)
 {
+        TQ84_DEBUG_INDENT_T("comand_run");
 	return cmd->method (dev);
 }
