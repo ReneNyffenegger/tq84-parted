@@ -1,0 +1,14 @@
+*.o
+*.lo
+.deps
+.libs
+po
+lib
+autom4te.cache
+*.log
+doc
+*.a
+*.la
+*.dirstamp
+config.status
+*.pc

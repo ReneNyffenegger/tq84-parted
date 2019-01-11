@@ -549,7 +549,7 @@ _device_probe_type (PedDevice* dev)
         struct stat             dev_stat;
         int                     dev_major;
         int                     dev_minor;
-//      TQ84_DEBUG_INDENT_T("_device_probe_type");
+        TQ84_DEBUG_INDENT_T("_device_probe_type");
         LinuxSpecific*          arch_specific = LINUX_SPECIFIC (dev);
 
         if (!_device_stat (dev, &dev_stat))
@@ -615,43 +615,44 @@ _device_probe_type (PedDevice* dev)
         return 1;
 }
 
-static int
-_get_linux_version ()
-{
-        static int kver = -1;
+// static int
+// _get_linux_version ()
+// {
+//         static int kver = -1;
+// 
+//         struct utsname uts;
+//         int major = 0;
+//         int minor = 0;
+//         int teeny = 0;
+// 
+//         if (kver != -1)
+//                 return kver;
+// 
+//         if (uname (&uts))
+//                 return kver = 0;
+//         int n = sscanf (uts.release, "%u.%u.%u", &major, &minor, &teeny);
+//         assert (n == 2 || n == 3);
+//         return kver = KERNEL_VERSION (major, minor, teeny);
+// }
 
-        struct utsname uts;
-        int major = 0;
-        int minor = 0;
-        int teeny = 0;
-
-        if (kver != -1)
-                return kver;
-
-        if (uname (&uts))
-                return kver = 0;
-        int n = sscanf (uts.release, "%u.%u.%u", &major, &minor, &teeny);
-        assert (n == 2 || n == 3);
-        return kver = KERNEL_VERSION (major, minor, teeny);
-}
-
-static int
-_have_kern26 ()
-{
-        static int have_kern26 = -1;
-        int kver;
-
-        if (have_kern26 != -1)
-                return have_kern26;
-
-        kver = _get_linux_version();
-        return have_kern26 = kver >= KERNEL_VERSION (2,6,0) ? 1 : 0;
-}
+// static int
+// _have_kern26 ()
+// {
+//         static int have_kern26 = -1;
+//         int kver;
+// 
+//         if (have_kern26 != -1)
+//                 return have_kern26;
+// 
+//         kver = _get_linux_version();
+//         return have_kern26 = kver >= KERNEL_VERSION (2,6,0) ? 1 : 0;
+// }
 
 #if USE_BLKID
 static void
 get_blkid_topology (LinuxSpecific *arch_specific)
 {
+        TQ84_DEBUG("get_blkid_topology");
         arch_specific->probe = blkid_new_probe ();
         if (!arch_specific->probe)
                 return;
@@ -671,15 +672,19 @@ _device_set_sector_size (PedDevice* dev)
         LinuxSpecific*  arch_specific = LINUX_SPECIFIC (dev);
         int sector_size;
 
+        TQ84_DEBUG_INDENT_T("_device_set_sector_size");
+
         dev->sector_size = PED_SECTOR_SIZE_DEFAULT;
         dev->phys_sector_size = PED_SECTOR_SIZE_DEFAULT;
 
+        TQ84_DEBUG("before: sector_size: %d, phys_sector_size: %d", dev->sector_size, dev->phys_sector_size);
+
         PED_ASSERT (dev->open_count);
 
-        if (_get_linux_version() < KERNEL_VERSION (2,3,0)) {
-                dev->sector_size = PED_SECTOR_SIZE_DEFAULT;
-                return;
-        }
+//      if (_get_linux_version() < KERNEL_VERSION (2,3,0)) {
+//              dev->sector_size = PED_SECTOR_SIZE_DEFAULT;
+//              return;
+//      }
 
         if (ioctl (arch_specific->fd, BLKSSZGET, &sector_size)) {
                 ped_exception_throw (
@@ -692,15 +697,19 @@ _device_set_sector_size (PedDevice* dev)
                 dev->sector_size = (long long)sector_size;
                 dev->phys_sector_size = dev->sector_size;
         }
+        TQ84_DEBUG("after: sector_size: %d, phys_sector_size: %d", dev->sector_size, dev->phys_sector_size);
 
 #if USE_BLKID
+        TQ84_DEBUG("USE_BLKID is defined");
         get_blkid_topology(arch_specific);
         if (!arch_specific->topology) {
+                TQ84_DEBUG("setting phys_sector_size to 0");
                 dev->phys_sector_size = 0;
         } else {
                 dev->phys_sector_size =
                         blkid_topology_get_physical_sector_size(
                                 arch_specific->topology);
+                TQ84_DEBUG("set phys_sector_size to %d", dev->phys_sector_size);
         }
         if (dev->phys_sector_size == 0) {
                 ped_exception_throw (
@@ -722,16 +731,16 @@ _device_set_sector_size (PedDevice* dev)
 #endif
 }
 
-static int
-_kernel_has_blkgetsize64(void)
-{
-        int version = _get_linux_version();
-
-        if (version >= KERNEL_VERSION (2,5,4)) return 1;
-        if (version <  KERNEL_VERSION (2,5,0) &&
-            version >= KERNEL_VERSION (2,4,18)) return 1;
-        return 0;
-}
+// static int
+// _kernel_has_blkgetsize64(void)
+// {
+//         int version = _get_linux_version();
+// 
+//         if (version >= KERNEL_VERSION (2,5,4)) return 1;
+//         if (version <  KERNEL_VERSION (2,5,0) &&
+//             version >= KERNEL_VERSION (2,4,18)) return 1;
+//         return 0;
+// }
 
 /* TODO: do a binary search if BLKGETSIZE doesn't work?! */
 static PedSector
@@ -752,11 +761,11 @@ _device_get_length (PedDevice* dev)
             && xstrtoll (test_str, NULL, 10, &test_size, NULL) == LONGINT_OK)
                 return test_size;
 
-        if (_kernel_has_blkgetsize64()) {
+//      if (_kernel_has_blkgetsize64()) {
                 if (ioctl(arch_specific->fd, BLKGETSIZE64, &bytes) == 0) {
                         return bytes / dev->sector_size;
                 }
-        }
+//      }
 
         if (ioctl (arch_specific->fd, BLKGETSIZE, &size)) {
                 ped_exception_throw (
@@ -777,6 +786,8 @@ _device_probe_geometry (PedDevice* dev)
         LinuxSpecific*          arch_specific = LINUX_SPECIFIC (dev);
         struct stat             dev_stat;
         struct hd_geometry      geometry;
+
+        TQ84_DEBUG_INDENT_T("_device_probe_geometry");
 
         if (!_device_stat (dev, &dev_stat))
                 return 0;
@@ -837,6 +848,8 @@ init_ide (PedDevice* dev)
         PedExceptionOption      ex_status;
         char                    hdi_buf[41];
         int                     sector_multiplier = 0;
+
+        TQ84_DEBUG("init_ide");
 
         if (!_device_stat (dev, &dev_stat))
                 goto error;
@@ -926,6 +939,8 @@ read_device_sysfs_file (PedDevice *dev, const char *file)
         FILE *f;
         char name_buf[128];
         char buf[256];
+
+        TQ84_DEBUG_INDENT_T("read_device_sysfs_file, last_component(%s) = %s, file = %s", dev->path, last_component(dev->path), file);
 
         snprintf (name_buf, 127, "/sys/block/%s/device/%s",
                   last_component (dev->path), file);
@@ -1026,6 +1041,7 @@ scsi_query_product_info (PedDevice* dev, char **vendor, char **product)
 static int
 scsi_get_product_info (PedDevice* dev, char **vendor, char **product)
 {
+        TQ84_DEBUG_INDENT_T("scsi_get_product_info");
         *vendor = read_device_sysfs_file (dev, "vendor");
         *product = read_device_sysfs_file (dev, "model");
         if (*vendor && *product)
@@ -1037,6 +1053,7 @@ scsi_get_product_info (PedDevice* dev, char **vendor, char **product)
 static int
 init_scsi (PedDevice* dev)
 {
+        TQ84_DEBUG_INDENT_T("init_scsi");
         struct scsi_idlun
         {
                 uint32_t dev_id;
@@ -1074,6 +1091,7 @@ init_scsi (PedDevice* dev)
 
         if (scsi_get_product_info (dev, &vendor, &product)) {
                 sprintf (dev->model, "%.8s %.16s", vendor, product);
+                TQ84_DEBUG("assigned dev->model: %s", dev->model);
                 free (vendor);
                 free (product);
         } else {
@@ -1096,6 +1114,7 @@ static int
 init_file (PedDevice* dev)
 {
         struct stat     dev_stat;
+        TQ84_DEBUG("init_file");
 
         if (!_device_stat (dev, &dev_stat))
                 goto error;
@@ -1332,8 +1351,12 @@ linux_new (const char* path)
         dev->dirty = 0;
         dev->boot_dirty = 0;
 
+        TQ84_DEBUG("before: dev->type  = %d", dev->type);
+
         if (!_device_probe_type (dev))
                 goto error_free_arch_specific;
+
+        TQ84_DEBUG("after: dev->type  = %d", dev->type);
 
         switch (dev->type) {
         case PED_DEVICE_IDE:
@@ -1515,6 +1538,7 @@ linux_is_busy (PedDevice* dev)
 static void
 _flush_cache (PedDevice* dev)
 {
+        TQ84_DEBUG_INDENT_T("_flush_cache");
         LinuxSpecific*  arch_specific = LINUX_SPECIFIC (dev);
         int             i;
 
@@ -1525,34 +1549,34 @@ _flush_cache (PedDevice* dev)
         ioctl (arch_specific->fd, BLKFLSBUF);
 
         /* With linux-2.6.0 and newer, we're done.  */
-        if (_have_kern26())
+//      if (_have_kern26())
                 return;
 
-        for (i = 1; i < 16; i++) {
-                char*           name;
-                int             fd;
-
-                name = _device_get_part_path (dev, i);
-                if (!name)
-                        break;
-                if (!_partition_is_mounted_by_path (name)) {
-                        fd = open (name, WR_MODE, 0);
-                        if (fd > 0) {
-                                ioctl (fd, BLKFLSBUF);
-retry:
-                                if (fsync (fd) < 0 || close (fd) < 0)
-					if (ped_exception_throw (
-						PED_EXCEPTION_WARNING,
-						PED_EXCEPTION_RETRY +
-							PED_EXCEPTION_IGNORE,
-						_("Error fsyncing/closing %s: %s"),
-						name, strerror (errno))
-							== PED_EXCEPTION_RETRY)
-						goto retry;
-                        }
-                }
-                free (name);
-        }
+//        for (i = 1; i < 16; i++) {
+//                char*           name;
+//                int             fd;
+//
+//                name = _device_get_part_path (dev, i);
+//                if (!name)
+//                        break;
+//                if (!_partition_is_mounted_by_path (name)) {
+//                        fd = open (name, WR_MODE, 0);
+//                        if (fd > 0) {
+//                                ioctl (fd, BLKFLSBUF);
+//retry:
+//                                if (fsync (fd) < 0 || close (fd) < 0)
+//					if (ped_exception_throw (
+//						PED_EXCEPTION_WARNING,
+//						PED_EXCEPTION_RETRY +
+//							PED_EXCEPTION_IGNORE,
+//						_("Error fsyncing/closing %s: %s"),
+//						name, strerror (errno))
+//							== PED_EXCEPTION_RETRY)
+//						goto retry;
+//                        }
+//                }
+//                free (name);
+//        }
 }
 
 static int
@@ -1563,6 +1587,7 @@ linux_open (PedDevice* dev)
 
 retry:
         arch_specific->fd = open (dev->path, RW_MODE);
+        TQ84_DEBUG("Assigned arch_specific->fd to %d", arch_specific->fd);
 
         if (arch_specific->fd == -1) {
                 TQ84_DEBUG("fd is -1");
@@ -1595,7 +1620,7 @@ retry:
         }
 
         /* With kernels < 2.6 flush cache for cache coherence issues */
-        if (!_have_kern26())
+//      if (!_have_kern26())
                 _flush_cache (dev);
 
         return 1;
@@ -1727,17 +1752,17 @@ linux_read (const PedDevice* dev, void* buffer, PedSector start,
         PED_ASSERT (dev != NULL);
         PED_ASSERT (dev->sector_size % PED_SECTOR_SIZE_DEFAULT == 0);
 
-        if (_get_linux_version() < KERNEL_VERSION (2,6,0)) {
-                TQ84_DEBUG("linux version < 2,6,6");
-                /* Kludge.  This is necessary to read/write the last
-                   block of an odd-sized disk, until Linux 2.5.x kernel fixes.
-                */
-                if (dev->type != PED_DEVICE_FILE && (dev->length & 1)
-                    && start + count - 1 == dev->length - 1)
-                        return ped_device_read (dev, buffer, start, count - 1)
-                                && _read_lastoddsector (
-                                        dev, (char *) buffer + (count-1) * 512);
-        }
+//      if (_get_linux_version() < KERNEL_VERSION (2,6,0)) {
+//              TQ84_DEBUG("linux version < 2,6,6");
+//              /* Kludge.  This is necessary to read/write the last
+//                 block of an odd-sized disk, until Linux 2.5.x kernel fixes.
+//              */
+//              if (dev->type != PED_DEVICE_FILE && (dev->length & 1)
+//                  && start + count - 1 == dev->length - 1)
+//                      return ped_device_read (dev, buffer, start, count - 1)
+//                              && _read_lastoddsector (
+//                                      dev, (char *) buffer + (count-1) * 512);
+//      }
         while (1) {
                 if (_device_seek (dev, start))
                         break;
@@ -1870,17 +1895,17 @@ linux_write (PedDevice* dev, const void* buffer, PedSector start,
                         return 1;
         }
 
-        if (_get_linux_version() < KERNEL_VERSION (2,6,0)) {
-                /* Kludge.  This is necessary to read/write the last
-                   block of an odd-sized disk, until Linux 2.5.x kernel fixes.
-                */
-                if (dev->type != PED_DEVICE_FILE && (dev->length & 1)
-                    && start + count - 1 == dev->length - 1)
-                        return ped_device_write (dev, buffer, start, count - 1)
-                                && _write_lastoddsector (
-                                        dev, ((char*) buffer
-                                              + (count-1) * dev->sector_size));
-        }
+//      if (_get_linux_version() < KERNEL_VERSION (2,6,0)) {
+//              /* Kludge.  This is necessary to read/write the last
+//                 block of an odd-sized disk, until Linux 2.5.x kernel fixes.
+//              */
+//              if (dev->type != PED_DEVICE_FILE && (dev->length & 1)
+//                  && start + count - 1 == dev->length - 1)
+//                      return ped_device_write (dev, buffer, start, count - 1)
+//                              && _write_lastoddsector (
+//                                      dev, ((char*) buffer
+//                                            + (count-1) * dev->sector_size));
+//      }
         while (1) {
                 if (_device_seek (dev, start))
                         break;
@@ -2907,18 +2932,18 @@ _dm_reread_part_table (PedDisk* disk)
 }
 #endif
 
-static int
-_have_blkpg ()
-{
-        static int have_blkpg = -1;
-        int kver;
-
-        if (have_blkpg != -1)
-                return have_blkpg;
-
-        kver = _get_linux_version();
-        return have_blkpg = kver >= KERNEL_VERSION (2,4,0) ? 1 : 0;
-}
+// static int
+// _have_blkpg ()
+// {
+//         static int have_blkpg = -1;
+//         int kver;
+// 
+//         if (have_blkpg != -1)
+//                 return have_blkpg;
+// 
+//         kver = _get_linux_version();
+//         return have_blkpg = kver >= KERNEL_VERSION (2,4,0) ? 1 : 0;
+// }
 
 /* Return nonzero upon success, 0 if something fails.  */
 static int
@@ -2934,7 +2959,7 @@ linux_disk_commit (PedDisk* disk)
 		   please write to the mailing list describing your system.
 		   Assuming it's never triggered, ...
 		   FIXME: remove this assertion in 2012.  */
-		assert (_have_blkpg ());
+//assert (_have_blkpg ());
 
 		if (!_disk_sync_part_table (disk))
 			return 0;
