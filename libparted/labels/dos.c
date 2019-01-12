@@ -35,6 +35,8 @@
 #include "misc.h"
 #include "pt-tools.h"
 
+#include "../../tq84-c-debug/tq84_debug.h"
+
 /* this MBR boot code is loaded into 0000:7c00 by the BIOS.  See mbr.s for
  * the source, and how to build it
  */
@@ -210,6 +212,7 @@ Bytes   Content
 static bool
 maybe_FAT (unsigned char const *s)
 {
+  TQ84_DEBUG_INDENT_T("maybe_FAT");
   if (! (s[0] == 0xeb || s[0] == 0xe9))
     return false;
 
@@ -234,6 +237,7 @@ maybe_FAT (unsigned char const *s)
 static int
 msdos_probe (const PedDevice *dev)
 {
+  TQ84_DEBUG_INDENT_T("msdos_probe");
 	PedDiskType*	disk_type;
 	DosRawTable*	part_table;
 	int		i;
@@ -306,6 +310,7 @@ msdos_probe (const PedDevice *dev)
 static PedDisk*
 msdos_alloc (const PedDevice* dev)
 {
+  TQ84_DEBUG_INDENT_T("msdos_alloc");
 	PedDisk* disk;
 	PED_ASSERT (dev != NULL);
 
@@ -326,6 +331,7 @@ msdos_alloc (const PedDevice* dev)
 static PedDisk*
 msdos_duplicate (const PedDisk* disk)
 {
+  TQ84_DEBUG_INDENT_T("msdos_duplicate");
 	PedDisk*	new_disk;
 
 	new_disk = ped_disk_new_fresh (disk->dev, &msdos_disk_type);
@@ -341,6 +347,7 @@ msdos_duplicate (const PedDisk* disk)
 static void
 msdos_free (PedDisk* disk)
 {
+  TQ84_DEBUG_INDENT_T("msdos_free");
 	PED_ASSERT (disk != NULL);
 
 	DosDiskData *disk_specific = disk->disk_specific;
@@ -351,6 +358,7 @@ msdos_free (PedDisk* disk)
 static int
 msdos_disk_set_flag (PedDisk *disk, PedDiskFlag flag, int state)
 {
+        TQ84_DEBUG_INDENT_T("msdos_disk_set_flag");
         DosDiskData *disk_specific = disk->disk_specific;
         switch (flag) {
         case PED_DISK_CYLINDER_ALIGNMENT:
@@ -364,6 +372,7 @@ msdos_disk_set_flag (PedDisk *disk, PedDiskFlag flag, int state)
 static int
 msdos_disk_get_flag (const PedDisk *disk, PedDiskFlag flag)
 {
+        TQ84_DEBUG_INDENT_T("msdos_disk_get_flag"); 
         DosDiskData *disk_specific = disk->disk_specific;
         switch (flag) {
         case PED_DISK_CYLINDER_ALIGNMENT:
@@ -376,6 +385,7 @@ msdos_disk_get_flag (const PedDisk *disk, PedDiskFlag flag)
 static int
 msdos_disk_is_flag_available (const PedDisk *disk, PedDiskFlag flag)
 {
+        TQ84_DEBUG_INDENT_T("msdos_disk_is_flag_available");
         switch (flag) {
         case PED_DISK_CYLINDER_ALIGNMENT:
                return 1;
@@ -407,6 +417,7 @@ static PedSector _GL_ATTRIBUTE_PURE
 chs_to_sector (const PedDevice* dev, const PedCHSGeometry *bios_geom,
 	       const RawCHS* chs)
 {
+  TQ84_DEBUG_INDENT_T("chs_to_sector");
 	PedSector	c;		/* not measured in sectors, but need */
 	PedSector	h;		/* lots of bits */
 	PedSector	s;
@@ -429,6 +440,7 @@ static void
 sector_to_chs (const PedDevice* dev, const PedCHSGeometry* bios_geom,
 	       PedSector sector, RawCHS* chs)
 {
+  TQ84_DEBUG_INDENT_T("sector_chs");
 	PedSector	real_c, real_h, real_s;
 
 	PED_ASSERT (dev != NULL);
@@ -497,6 +509,7 @@ linear_end (const PedDisk* disk, const DosRawPartition* raw_part,
 static int _GL_ATTRIBUTE_PURE
 partition_check_bios_geometry (PedPartition* part, PedCHSGeometry* bios_geom)
 {
+  TQ84_DEBUG_INDENT_T("partition_check_bios_geometry");
 	PedSector		leg_start, leg_end;
 	DosPartitionData*	dos_data;
 	PedDisk*		disk;
@@ -523,6 +536,7 @@ partition_check_bios_geometry (PedPartition* part, PedCHSGeometry* bios_geom)
 static int _GL_ATTRIBUTE_PURE
 disk_check_bios_geometry (const PedDisk* disk, PedCHSGeometry* bios_geom)
 {
+  TQ84_DEBUG_INDENT_T("disk_check_bios_geometry");
 	PedPartition* part = NULL;
 
 	PED_ASSERT (disk != NULL);
@@ -540,6 +554,7 @@ disk_check_bios_geometry (const PedDisk* disk, PedCHSGeometry* bios_geom)
 static int
 probe_filesystem_for_geom (const PedPartition* part, PedCHSGeometry* bios_geom)
 {
+  TQ84_DEBUG_INDENT_T("probe_filesystem_for_geom");
 	const char* ms_types[] = {"ntfs", "fat16", "fat32", NULL};
 	int i;
 	int found;
@@ -629,6 +644,7 @@ end:
 static int
 probe_partition_for_geom (const PedPartition* part, PedCHSGeometry* bios_geom)
 {
+  TQ84_DEBUG_INDENT_T("probe_filesystem_for_geom");
 	DosPartitionData* dos_data;
 	RawCHS* start_chs;
 	RawCHS* end_chs;
@@ -775,6 +791,7 @@ static void
 partition_probe_bios_geometry (const PedPartition* part,
                                PedCHSGeometry* bios_geom)
 {
+  TQ84_DEBUG_INDENT_T("partition_probe_bios_geometry");
 	PED_ASSERT (part != NULL);
 	PED_ASSERT (part->disk != NULL);
 	PED_ASSERT (bios_geom != NULL);
@@ -800,6 +817,7 @@ partition_probe_bios_geometry (const PedPartition* part,
 static void
 disk_probe_bios_geometry (const PedDisk* disk, PedCHSGeometry* bios_geom)
 {
+  TQ84_DEBUG_INDENT_T("disk_probe_bios_geometry");
 	PedPartition*	part;
 
 	/* first look at the boot partition */

@@ -240,6 +240,7 @@ int
 ped_device_open (PedDevice* dev)
 {
 	int	status;
+  TQ84_DEBUG_INDENT_T("ped_device_open");
 
 	PED_ASSERT (dev != NULL);
 	PED_ASSERT (!dev->external_mode);

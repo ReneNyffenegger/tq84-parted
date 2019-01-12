@@ -661,6 +661,7 @@ get_blkid_topology (LinuxSpecific *arch_specific)
                                    arch_specific->fd, 0, 0))
                 return;
 
+        TQ84_DEBUG("Assigning topology");
         arch_specific->topology =
                 blkid_probe_get_topology(arch_specific->probe);
 }

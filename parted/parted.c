@@ -984,6 +984,7 @@ _print_disk_info (const PedDevice *dev, const PedDisk *disk)
                     dev->sector_size, dev->phys_sector_size,
                     pt_name, dev->model, disk_flags);
         } else {
+            TQ84_DEBUG("going to print the model: %s (%s)", dev->model, transport[dev->type]);
             printf (_("Model: %s (%s)\n"),
                     dev->model, transport[dev->type]);
             printf (_("Disk %s: %s\n"), dev->path, end);
@@ -1053,7 +1054,7 @@ do_print (PedDevice** dev)
         }
 
         if (!has_devices_arg && !has_list_arg) {
-                TQ84_DEBUG("has_devices_arg");
+                TQ84_DEBUG("has_devices_arg, calling ped_disk_new");
                 disk = ped_disk_new (*dev);
                 /* Returning NULL here is an indication of failure, when in
                    script mode.  Otherwise (interactive mode) it may indicate
@@ -1063,18 +1064,22 @@ do_print (PedDevice** dev)
                    exit code is less important in interactive mode.  */
                 if (disk == NULL && opt_script_mode)
                         ok = 0;
+                TQ84_DEBUG("ok = %d", ok);
         }
 
         if (disk &&
             ped_disk_is_flag_available(disk, PED_DISK_CYLINDER_ALIGNMENT))
                 if (!ped_disk_set_flag(disk, PED_DISK_CYLINDER_ALIGNMENT,
-                                       alignment == ALIGNMENT_CYLINDER))
+                                       alignment == ALIGNMENT_CYLINDER)) {
+                        TQ84_DEBUG("goto error_destroy_disk");
                         goto error_destroy_disk;
 
+                }
         if (has_devices_arg) {
                 char*           dev_name;
                 PedDevice*      current_dev = NULL;
 
+                TQ84_DEBUG("calling ped_device_probe_all");
                 ped_device_probe_all();
 
                 while ((current_dev = ped_device_get_next(current_dev))) {
@@ -1123,8 +1128,11 @@ do_print (PedDevice** dev)
         has_name = ped_disk_type_check_feature (disk->type,
                                          PED_DISK_TYPE_PARTITION_NAME);
 
+        TQ84_DEBUG("has_name = %d, has_extended = %d", has_name, has_extended);
+
         PedPartition* part;
         if (!opt_machine_mode) {
+            TQ84_DEBUG("! opt_machine_mode");
             StrList *row1;
 
             if (ped_unit_get_default() == PED_UNIT_CHS) {
@@ -1152,6 +1160,8 @@ do_print (PedDevice** dev)
 
             for (part = ped_disk_next_partition (disk, NULL); part;
                  part = ped_disk_next_partition (disk, part)) {
+
+                    TQ84_DEBUG_INDENT_T("Iterating over partition %d", part->num);
 
                     if ((!has_free_arg && !ped_partition_is_active(part)) ||
                         part->type & PED_PARTITION_METADATA)
@@ -1225,6 +1235,7 @@ do_print (PedDevice** dev)
             str_list_destroy (row1);
 
         } else {
+           TQ84_DEBUG("machine_mode");
 
             for (part = ped_disk_next_partition (disk, NULL); part;
                  part = ped_disk_next_partition (disk, part)) {
@@ -1275,6 +1286,7 @@ do_print (PedDevice** dev)
             }
         }
 
+        TQ84_DEBUG("calling ped_disk_destroy");
         ped_disk_destroy (disk);
 
         return ok;
@@ -1289,6 +1301,7 @@ nopt:
 static int
 _print_list ()
 {
+        TQ84_DEBUG_INDENT_T("_print_list");
         PedDevice *current_dev = NULL;
 
         ped_device_probe_all();

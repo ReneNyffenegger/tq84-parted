@@ -108,6 +108,7 @@ ped_disk_type_unregister (PedDiskType* disk_type)
 PedDiskType*
 ped_disk_type_get_next (PedDiskType const *type)
 {
+  TQ84_DEBUG_INDENT_T("ped_disk_type_get_next");
 	if (type)
 		return type->next;
 	else
@@ -142,6 +143,7 @@ ped_disk_type_get (const char* name)
 PedDiskType*
 ped_disk_probe (PedDevice* dev)
 {
+        TQ84_DEBUG_INDENT_T("ped_disk_probe (Return thye type of partition table on dev");
         PedDiskType* walk = NULL;
 
         PED_ASSERT (dev != NULL);
