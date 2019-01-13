@@ -23,6 +23,7 @@
 #include <parted/debug.h>
 
 #include "architecture.h"
+#include "../../tq84-c-debug/tq84_debug.h"
 
 #if ENABLE_NLS
 #  include <locale.h>
@@ -163,6 +164,7 @@ static void _init() __attribute__ ((constructor));
 static void
 _init()
 {
+//TQ84_DEBUG_INDENT_T("_init");
 #ifdef ENABLE_NLS
 	bindtextdomain (PACKAGE, LOCALEDIR);
 #endif

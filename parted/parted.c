@@ -2201,7 +2201,8 @@ main (int argc, char** argv)
         PedDevice*      dev;
         int             status;
 
-        tq84_debug_open("/tmp/parted.out" , "w");
+
+  tq84_debug_open("/tmp/parted.out" , "w");
         TQ84_DEBUG_INDENT_T("main");
 
         set_program_name (argv[0]);

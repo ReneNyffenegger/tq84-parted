@@ -212,7 +212,7 @@ Bytes   Content
 static bool
 maybe_FAT (unsigned char const *s)
 {
-  TQ84_DEBUG_INDENT_T("maybe_FAT");
+//TQ84_DEBUG_INDENT_T("maybe_FAT");
   if (! (s[0] == 0xeb || s[0] == 0xe9))
     return false;
 

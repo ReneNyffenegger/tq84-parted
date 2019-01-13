@@ -71,7 +71,7 @@ static PedDiskType*	disk_types = NULL;
 void
 ped_disk_type_register (PedDiskType* disk_type)
 {
-//TQ84_DEBUG_INDENT_T("ped_disk_type_register");
+//TQ84_DEBUG_INDENT_T("ped_disk_type_register, disk_type->name = %s", disk_type->name);
 	PED_ASSERT (disk_type != NULL);
 	PED_ASSERT (disk_type->ops != NULL);
 	PED_ASSERT (disk_type->name != NULL);
