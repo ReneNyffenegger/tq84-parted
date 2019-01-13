@@ -23,7 +23,9 @@
 #include <parted/debug.h>
 
 #include "architecture.h"
-#include "../../tq84-c-debug/tq84_debug.h"
+#define TQ84_DEBUG_ENABLED
+#define TQ84_DEBUG_TO_FILE
+#include "../../tq84-c-debug/tq84_debug.c"
 
 #if ENABLE_NLS
 #  include <locale.h>
@@ -80,6 +82,7 @@ extern void ped_disk_dasd_init ();
 static void
 init_disk_types ()
 {
+  TQ84_DEBUG_INDENT_T("init_disk_types");
 	ped_disk_loop_init ();	/* must be last in the probe list */
 
 #if defined __s390__ || defined __s390x__
@@ -114,6 +117,7 @@ extern void ped_file_system_nilfs2_init (void);
 static void
 init_file_system_types ()
 {
+  TQ84_DEBUG_INDENT_T("init_file_system_types");
 	ped_file_system_amiga_init ();
 	ped_file_system_xfs_init ();
 	ped_file_system_ufs_init ();
@@ -164,7 +168,8 @@ static void _init() __attribute__ ((constructor));
 static void
 _init()
 {
-//TQ84_DEBUG_INDENT_T("_init");
+  tq84_debug_open("/tmp/parted.out" , "w");
+  TQ84_DEBUG_INDENT_T("_init");
 #ifdef ENABLE_NLS
 	bindtextdomain (PACKAGE, LOCALEDIR);
 #endif
