@@ -10,6 +10,10 @@ libparted/disk.c writes:
 
 **`PedDeviceType`** is an enum that represents SCSI, IDE etc. It is defined in `include/parted/device.h`.
 
+**`PedDisk`**: represents a partition table (aka disk label) (`include/parted/disk.h`).
+
+**`PedPartition`** represents a partition (`include/parted/disk.h`).
+
 **`PedDiskType`** is defined in include/parted/disk.h. It seems as though it represents a partition (but see also `PedPartition`).
 `PedDiskTypeFeature` is a bitmap of supported features, such as PED_DISK_TYPE_EXTENDED, PED_DISK_TYPE_PARTITION_NAME etc.
 

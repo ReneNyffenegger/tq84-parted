@@ -163,8 +163,10 @@ ped_device_get (const char* path)
 
 	PED_ASSERT (path != NULL);
 	/* Don't canonicalize /dev/mapper paths, see tests/symlink.c */
-	if (strncmp (path, "/dev/mapper/", 12))
+	if (strncmp (path, "/dev/mapper/", 12)) {
+    TQ84_DEBUG("strncmp");
 		normal_path = canonicalize_file_name (path);
+  }
 
   TQ84_DEBUG("normal_path = %s", normal_path);
 	if (!normal_path)

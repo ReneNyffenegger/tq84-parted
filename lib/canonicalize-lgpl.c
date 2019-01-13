@@ -40,6 +40,8 @@
 #include <errno.h>
 #include <stddef.h>
 
+#include "../../tq84-c-debug/tq84_debug.h"
+
 #ifdef _LIBC
 # include <shlib-compat.h>
 #else
@@ -374,6 +376,7 @@ compat_symbol (libc, __old_realpath, realpath, GLIBC_2_0);
 char *
 __canonicalize_file_name (const char *name)
 {
+  TQ84_DEBUG_INDENT_T("__canonicalize_file_name");
   return __realpath (name, NULL);
 }
 weak_alias (__canonicalize_file_name, canonicalize_file_name)
