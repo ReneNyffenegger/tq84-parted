@@ -1000,6 +1000,7 @@ _print_disk_info (const PedDevice *dev, const PedDisk *disk)
                 _print_disk_geometry (dev);
 
         if (!opt_machine_mode) {
+            TQ84_DEBUG("! opt_machine_mode, pt_name: %s, disk flags: %s", pt_name, disk_flags);
             printf (_("Partition Table: %s\n"), pt_name);
             printf (_("Disk Flags: %s\n"), disk_flags);
         }
@@ -2090,7 +2091,7 @@ PedDevice*      dev;
 
 /* specified on comand line? */
 if (*argc_ptr) {
-        TQ84_DEBUG("*argc_ptr");
+        TQ84_DEBUG("*argc_ptr, calling ped_device_get");
         dev = ped_device_get ((*argv_ptr) [0]);
         if (!dev)
                 return NULL;
@@ -2112,6 +2113,7 @@ retry:
         }
 }
 
+TQ84_DEBUG("calling ped_device_open");
 if (!ped_device_open (dev))
         return NULL;
 return dev;
@@ -2204,6 +2206,12 @@ main (int argc, char** argv)
 
 //tq84_debug_open("/tmp/parted.out" , "w");
         TQ84_DEBUG_INDENT_T("main");
+
+#if USE_BLKID
+        TQ84_DEBUG("USE_BLKID");
+#else
+        TQ84_DEBUG("not USE_BLKID");
+#endif
 
         set_program_name (argv[0]);
         atexit (close_stdout);

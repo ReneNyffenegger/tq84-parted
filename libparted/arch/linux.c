@@ -528,6 +528,7 @@ _device_stat (PedDevice* dev, struct stat * dev_stat)
         PED_ASSERT (!dev->external_mode);
 
         while (1) {
+          TQ84_DEBUG("while(1), going to call stat");
                 if (!stat (dev->path, dev_stat)) {
                         return 1;
                 } else {
@@ -2218,6 +2219,7 @@ _probe_sys_block ()
 static int
 _probe_standard_devices ()
 {
+  TQ84_DEBUG_INDENT_T("_probe_standard_devices");
         _ped_device_probe ("/dev/hda");
         _ped_device_probe ("/dev/hdb");
         _ped_device_probe ("/dev/hdc");

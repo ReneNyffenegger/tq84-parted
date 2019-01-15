@@ -176,14 +176,17 @@ ped_device_get (const char* path)
 	if (!normal_path)
 		return NULL;
 
-  TQ84_DEBUG("for walk = devices");
+{ TQ84_DEBUG_INDENT_T("for walk = devices");
 	for (walk = devices; walk != NULL; walk = walk->next) {
+
+    TQ84_DEBUG("walk->path = %s", walk->path);
 		if (!strcmp (walk->path, normal_path)) {
 			free (normal_path);
       TQ84_DEBUG("return walk (1)");
 			return walk;
 		}
 	}
+}
 
   TQ84_DEBUG("walk = ped_architecture->dev_ops->_new");
 	walk = ped_architecture->dev_ops->_new (normal_path);
@@ -249,8 +252,10 @@ ped_device_open (PedDevice* dev)
 
 	if (dev->open_count)
 		status = ped_architecture->dev_ops->refresh_open (dev);
-	else
+	else {
+    TQ84_DEBUG("! open_count, calling ped_architecture->dev_ops->open");
 		status = ped_architecture->dev_ops->open (dev);
+  }
 	if (status)
 		dev->open_count++;
 	return status;
