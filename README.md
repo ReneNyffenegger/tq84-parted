@@ -20,3 +20,7 @@ libparted/disk.c writes:
 **`PedGeometry`** defines a geometry (that is: start sector, length (or count?) of sectors and end sector) and is defined in `include/parted/geom.h`.
 
 MBR/dos related things seem to be stored under libparted/labels/dos.c
+
+# See Also
+
+  https://github.com/ReneNyffenegger/Partition-tables-and-file-systems
