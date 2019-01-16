@@ -35,6 +35,8 @@
 #include "misc.h"
 #include "pt-tools.h"
 
+#define TQ84_DEBUG_ENABLED
+#define TQ84_DEBUG_TO_FILE
 #include "../../tq84-c-debug/tq84_debug.h"
 
 /* this MBR boot code is loaded into 0000:7c00 by the BIOS.  See mbr.s for
@@ -248,8 +250,11 @@ msdos_probe (const PedDevice *dev)
                 return 0;
 
 	void *label;
-	if (!ptt_read_sector (dev, 0, &label))
+  TQ84_DEBUG("ptt_read_sector");
+	if (!ptt_read_sector (dev, 0, &label)) {
+    TQ84_DEBUG("return 0");
 		return 0;
+  }
 
 	part_table = (DosRawTable *) label;
 
@@ -300,10 +305,12 @@ msdos_probe (const PedDevice *dev)
 #endif /* ENABLE_PC98 */
 
 	free (label);
+  TQ84_DEBUG("return 1");
 	return 1;
 
  probe_fail:
 	free (label);
+  TQ84_DEBUG("return 0");
 	return 0;
 }
 
@@ -2495,6 +2502,7 @@ static PedDiskType msdos_disk_type = {
 void
 ped_disk_msdos_init ()
 {
+  TQ84_DEBUG_INDENT_T("ped_disk_msdos_init");
 	PED_ASSERT (sizeof (DosRawPartition) == 16);
 	PED_ASSERT (sizeof (DosRawTable) == 512);
 

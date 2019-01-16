@@ -143,7 +143,7 @@ ped_disk_type_get (const char* name)
 PedDiskType*
 ped_disk_probe (PedDevice* dev)
 {
-        TQ84_DEBUG_INDENT_T("ped_disk_probe (Return thye type of partition table on dev");
+        TQ84_DEBUG_INDENT_T("ped_disk_probe (Return the type of partition table on dev");
         PedDiskType* walk = NULL;
 
         PED_ASSERT (dev != NULL);
@@ -152,6 +152,7 @@ ped_disk_probe (PedDevice* dev)
                 return NULL;
 
         ped_exception_fetch_all ();
+   {    TQ84_DEBUG_INDENT_T("for walk = ped_disk_type_get_next");
         for (walk = ped_disk_type_get_next (NULL); walk;
              walk = ped_disk_type_get_next (walk))
           {
@@ -160,15 +161,18 @@ ped_disk_probe (PedDevice* dev)
                                  walk->name);
                         fflush (stderr);
                 }
+                TQ84_DEBUG("calling walk->ops->probe");
                 if (walk->ops->probe (dev))
                         break;
           }
+    }
 
         if (ped_exception)
                 ped_exception_catch ();
         ped_exception_leave_all ();
 
         ped_device_close (dev);
+        TQ84_DEBUG("return walk (name = %s)", walk->name);
         return walk;
 }
 
@@ -194,6 +198,7 @@ ped_disk_new (PedDevice* dev)
 	if (!ped_device_open (dev))
 		goto error;
 
+  TQ84_DEBUG("calling ped_disk_probe");
 	type = ped_disk_probe (dev);
 	if (!type) {
 		ped_exception_throw (PED_EXCEPTION_ERROR, PED_EXCEPTION_CANCEL,
@@ -201,6 +206,7 @@ ped_disk_new (PedDevice* dev)
 			dev->path);
 		goto error_close_dev;
 	}
+  TQ84_DEBUG("found type->name = %s", type->name);
 	disk = ped_disk_new_fresh (dev, type);
 	if (!disk)
 		goto error_close_dev;

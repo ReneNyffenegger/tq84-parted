@@ -348,6 +348,7 @@ int
 ped_device_read (const PedDevice* dev, void* buffer, PedSector start,
                  PedSector count)
 {
+  TQ84_DEBUG_INDENT_T("ped_device_read, start = %lld, count = %lld", start, count);
         PED_ASSERT (dev != NULL);
         PED_ASSERT (buffer != NULL);
         PED_ASSERT (!dev->external_mode);

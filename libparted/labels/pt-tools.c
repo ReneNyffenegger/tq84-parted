@@ -31,6 +31,10 @@
 # define _(String) (String)
 #endif /* ENABLE_NLS */
 
+#define TQ84_DEBUG_ENABLED
+#define TQ84_DEBUG_TO_FILE
+#include "../../tq84-c-debug/tq84_debug.h"
+
 static char zero[16 * 1024];
 
 /* Write a single sector to DISK, filling the first BUFLEN
@@ -64,8 +68,10 @@ int
 ptt_read_sectors (PedDevice const *dev, PedSector start_sector,
 		  PedSector n_sectors, void **buf)
 {
+  TQ84_DEBUG_INDENT_T("ptt_read_sectors start_sector: %lld, n_sectors = %lld", start_sector, n_sectors);
   char *b = ped_malloc (n_sectors * dev->sector_size);
   PED_ASSERT (b != NULL);
+  TQ84_DEBUG("calling ped_device_read");
   if (!ped_device_read (dev, b, start_sector, n_sectors)) {
     free (b);
     return 0;
@@ -80,6 +86,7 @@ ptt_read_sectors (PedDevice const *dev, PedSector start_sector,
 int
 ptt_read_sector (PedDevice const *dev, PedSector sector_num, void **buf)
 {
+  TQ84_DEBUG_INDENT_T("ptt_read_sector sector_num: %lld", sector_num);
   return ptt_read_sectors (dev, sector_num, 1, buf);
 }
 

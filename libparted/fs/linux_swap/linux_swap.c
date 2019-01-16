@@ -33,6 +33,10 @@
 #include <unistd.h>
 #include <uuid/uuid.h>
 
+#define TQ84_DEBUG_ENABLED
+#define TQ84_DEBUG_TO_FILE
+#include "../../../tq84-c-debug/tq84_debug.h"
+
 #define SWAP_SPECIFIC(fs) ((SwapSpecific*) (fs->type_specific))
 #define BUFFER_SIZE 128
 
@@ -398,6 +402,7 @@ static PedFileSystemType _swap_swsusp_type = {
 void
 ped_file_system_linux_swap_init ()
 {
+  TQ84_DEBUG_INDENT_T("ped_file_system_linux_swap_init");
 	ped_file_system_type_register (&_swap_v0_type);
 	ped_file_system_type_register (&_swap_v1_type);
 	ped_file_system_type_register (&_swap_swsusp_type);

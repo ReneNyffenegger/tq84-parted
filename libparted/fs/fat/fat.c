@@ -22,6 +22,10 @@
 
 #include "fat.h"
 
+#define TQ84_DEBUG_ENABLED
+#define TQ84_DEBUG_TO_FILE
+#include "../../../tq84-c-debug/tq84_debug.h"
+
 PedFileSystem*
 fat_alloc (const PedGeometry* geom)
 {
@@ -61,6 +65,7 @@ fat_free (PedFileSystem* fs)
 PedGeometry*
 fat_probe (PedGeometry* geom, FatType* fat_type)
 {
+  TQ84_DEBUG_INDENT_T("fat_probe");
 	PedFileSystem*		fs;
 	FatSpecific*		fs_info;
 	PedGeometry*		result;
@@ -80,39 +85,51 @@ fat_probe (PedGeometry* geom, FatType* fat_type)
 				   fs_info->sector_count);
 
 	fat_free (fs);
+  TQ84_DEBUG("returning result");
 	return result;
 
 error_free_fs:
 	fat_free (fs);
 error:
+  TQ84_DEBUG("returning NULL");
 	return NULL;
 }
 
 PedGeometry*
 fat_probe_fat16 (PedGeometry* geom)
 {
+  TQ84_DEBUG_INDENT_T("fat_probe_fat16");
 	FatType		fat_type;
+  TQ84_DEBUG("calling fat_probe");
 	PedGeometry*	probed_geom = fat_probe (geom, &fat_type);
 
 	if (probed_geom) {
-		if (fat_type == FAT_TYPE_FAT16)
+		if (fat_type == FAT_TYPE_FAT16) {
+      TQ84_DEBUG("return probed_geom");
 			return probed_geom;
+    }
 		ped_geometry_destroy (probed_geom);
 	}
+  TQ84_DEBUG_INDENT_T("return NULL");
 	return NULL;
 }
 
 PedGeometry*
 fat_probe_fat32 (PedGeometry* geom)
 {
+  TQ84_DEBUG_INDENT_T("fat_probe_fat32");
 	FatType		fat_type;
+  TQ84_DEBUG("calling fat_probe");
 	PedGeometry*	probed_geom = fat_probe (geom, &fat_type);
 
 	if (probed_geom) {
-		if (fat_type == FAT_TYPE_FAT32)
+		if (fat_type == FAT_TYPE_FAT32) {
+      TQ84_DEBUG("return probed_geom");
 			return probed_geom;
+    }
 		ped_geometry_destroy (probed_geom);
 	}
+  TQ84_DEBUG("return NULL");
 	return NULL;
 }
 

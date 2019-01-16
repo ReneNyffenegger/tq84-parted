@@ -553,6 +553,7 @@ _device_probe_type (PedDevice* dev)
         TQ84_DEBUG_INDENT_T("_device_probe_type");
         LinuxSpecific*          arch_specific = LINUX_SPECIFIC (dev);
 
+        TQ84_DEBUG("Calling _device_stat");
         if (!_device_stat (dev, &dev_stat))
                 return 0;
 

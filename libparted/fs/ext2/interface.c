@@ -25,6 +25,10 @@
 #include <parted/parted.h>
 #include "ext2.h"
 
+#define TQ84_DEBUG_ENABLED
+#define TQ84_DEBUG_TO_FILE
+#include "../../../tq84-c-debug/tq84_debug.h"
+
 static PedFileSystemType _ext2_type;
 static PedFileSystemType _ext3_type;
 
@@ -104,18 +108,21 @@ _ext2_generic_probe (PedGeometry* geom, int expect_ext_ver)
 static PedGeometry*
 _ext2_probe (PedGeometry* geom)
 {
+  TQ84_DEBUG_INDENT_T("_ext2_probe");
 	return _ext2_generic_probe (geom, 2);
 }
 
 static PedGeometry*
 _ext3_probe (PedGeometry* geom)
 {
+  TQ84_DEBUG_INDENT_T("_ext3_probe");
 	return _ext2_generic_probe (geom, 3);
 }
 
 static PedGeometry*
 _ext4_probe (PedGeometry* geom)
 {
+  TQ84_DEBUG_INDENT_T("_ext3_probe");
 	return _ext2_generic_probe (geom, 4);
 }
 
@@ -156,6 +163,7 @@ static PedFileSystemType _ext4_type = {
 
 void ped_file_system_ext2_init ()
 {
+  TQ84_DEBUG_INDENT_T("ped_file_system_ext2_init");
 	ped_file_system_type_register (&_ext2_type);
 	ped_file_system_type_register (&_ext3_type);
 	ped_file_system_type_register (&_ext4_type);
