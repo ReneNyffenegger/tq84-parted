@@ -1690,6 +1690,7 @@ llseek (unsigned int fd, loff_t offset, unsigned int whence)
 static int
 _device_seek (const PedDevice* dev, PedSector sector)
 {
+  TQ84_DEBUG_INDENT_T("_device_seek, sector = &lld", sector);
         LinuxSpecific*  arch_specific;
 
         PED_ASSERT (dev->sector_size % PED_SECTOR_SIZE_DEFAULT == 0);
@@ -1766,7 +1767,10 @@ linux_read (const PedDevice* dev, void* buffer, PedSector start,
 //                              && _read_lastoddsector (
 //                                      dev, (char *) buffer + (count-1) * 512);
 //      }
+   {
+     TQ84_DEBUG_INDENT_T("while(1)");
         while (1) {
+                TQ84_DEBUG("Calling _device_seek, start = %lld", start);
                 if (_device_seek (dev, start))
                         break;
 
@@ -1792,6 +1796,7 @@ linux_read (const PedDevice* dev, void* buffer, PedSector start,
                                 break;
                 }
         }
+    }
 
         size_t read_length = count * dev->sector_size;
         if (posix_memalign (&diobuf, dev->sector_size, read_length) != 0)

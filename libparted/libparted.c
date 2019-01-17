@@ -25,6 +25,8 @@
 #include "architecture.h"
 #define TQ84_DEBUG_ENABLED
 #define TQ84_DEBUG_TO_FILE
+#define TQ84_DEBUG_FILENAME_WIDTH "30"
+#define TQ84_DEBUG_FUNCNAME_WIDTH "50"
 #include "../../tq84-c-debug/tq84_debug.c"
 
 #if ENABLE_NLS
@@ -170,6 +172,8 @@ _init()
 {
   tq84_debug_open("/tmp/parted.out" , "w");
   TQ84_DEBUG_INDENT_T("_init");
+
+  TQ84_DEBUG("SIZEOF_OFF_T = %d", SIZEOF_OFF_T);
 #ifdef ENABLE_NLS
 	bindtextdomain (PACKAGE, LOCALEDIR);
 #endif
