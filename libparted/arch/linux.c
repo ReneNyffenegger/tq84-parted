@@ -1690,7 +1690,7 @@ llseek (unsigned int fd, loff_t offset, unsigned int whence)
 static int
 _device_seek (const PedDevice* dev, PedSector sector)
 {
-  TQ84_DEBUG_INDENT_T("_device_seek, sector = &lld", sector);
+  TQ84_DEBUG_INDENT_T("_device_seek, sector = %lld", sector);
         LinuxSpecific*  arch_specific;
 
         PED_ASSERT (dev->sector_size % PED_SECTOR_SIZE_DEFAULT == 0);
@@ -1702,11 +1702,13 @@ _device_seek (const PedDevice* dev, PedSector sector)
 #if SIZEOF_OFF_T < 8
         if (sizeof (off_t) < 8) {
                 loff_t  pos = (loff_t)(sector * dev->sector_size);
+                TQ84_DEBUG("calling llseek, pos = %lld", pos);
                 return llseek (arch_specific->fd, pos, SEEK_SET) == pos;
         } else
 #endif
         {
                 off_t   pos = sector * dev->sector_size;
+                TQ84_DEBUG("calling lseek, pos = %lld", pos);
                 return lseek (arch_specific->fd, pos, SEEK_SET) == pos;
         }
 }
@@ -1768,12 +1770,13 @@ linux_read (const PedDevice* dev, void* buffer, PedSector start,
 //                                      dev, (char *) buffer + (count-1) * 512);
 //      }
    {
-     TQ84_DEBUG_INDENT_T("while(1)");
+     TQ84_DEBUG_INDENT_T("while(1) (a)");
         while (1) {
                 TQ84_DEBUG("Calling _device_seek, start = %lld", start);
                 if (_device_seek (dev, start))
                         break;
 
+                TQ84_DEBUG("Going on");
                 ex_status = ped_exception_throw (
                         PED_EXCEPTION_ERROR,
                         PED_EXCEPTION_RETRY_IGNORE_CANCEL,
@@ -1802,6 +1805,8 @@ linux_read (const PedDevice* dev, void* buffer, PedSector start,
         if (posix_memalign (&diobuf, dev->sector_size, read_length) != 0)
                 return 0;
 
+   {
+     TQ84_DEBUG_INDENT_T("while(1) (b)");
         while (1) {
                 ssize_t status = read (arch_specific->fd, diobuf, read_length);
                 if (status > 0)
@@ -1841,6 +1846,7 @@ linux_read (const PedDevice* dev, void* buffer, PedSector start,
                                 break;
                 }
         }
+    }
 
         free (diobuf);
 
