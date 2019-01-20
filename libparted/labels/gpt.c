@@ -44,6 +44,10 @@
 
 #include "pt-tools.h"
 
+#define TQ84_DEBUG_ENABLED
+#define TQ84_DEBUG_TO_FILE
+#include "../../tq84-c-debug/tq84_debug.h"
+
 #if ENABLE_NLS
 #  include <libintl.h>
 #  define _(String) gettext (String)
@@ -457,6 +461,7 @@ _pmbr_is_valid (const LegacyMBR_t *mbr)
 static int
 gpt_probe (const PedDevice *dev)
 {
+  TQ84_DEBUG_INDENT_T("gpt_probe");
   GuidPartitionTableHeader_t *gpt = NULL;
   int gpt_sig_found = 0;
 

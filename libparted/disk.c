@@ -156,6 +156,7 @@ ped_disk_probe (PedDevice* dev)
         for (walk = ped_disk_type_get_next (NULL); walk;
              walk = ped_disk_type_get_next (walk))
           {
+                TQ84_DEBUG("next walk");
                 if (getenv ("PARTED_DEBUG")) {
                         fprintf (stderr, "probe label: %s\n",
                                  walk->name);
@@ -303,6 +304,7 @@ error:
 static PedDiskType const * _GL_ATTRIBUTE_PURE
 find_disk_type (char const *name)
 {
+  TQ84_DEBUG_INDENT_T("find_disk_type, name = %s (Return name's PedDiskType)", name);
   PedDiskType const *t;
   for (t = ped_disk_type_get_next (NULL); t; t = ped_disk_type_get_next (t))
     {
@@ -322,6 +324,7 @@ find_disk_type (char const *name)
 int
 ped_disk_clobber (PedDevice* dev)
 {
+  TQ84_DEBUG_INDENT_T("ped_disk_clobber");
 	PED_ASSERT (dev != NULL);
 
 	if (!ped_device_open (dev))

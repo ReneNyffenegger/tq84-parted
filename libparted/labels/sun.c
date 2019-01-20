@@ -37,6 +37,10 @@
 #include "pt-tools.h"
 #include "verify.h"
 
+#define TQ84_DEBUG_ENABLED
+#define TQ84_DEBUG_TO_FILE
+#include "../../tq84-c-debug/tq84_debug.h"
+
 /* Most of this came from util-linux's sun support, which was mostly done
    by Jakub Jelinek.  */
 
@@ -140,6 +144,7 @@ sun_verify_checksum (SunRawLabel const *label)
 static int
 sun_probe (const PedDevice *dev)
 {
+  TQ84_DEBUG_INDENT_T("sun_probe");
 	PED_ASSERT (dev != NULL);
 
 	void *s0;
@@ -872,6 +877,10 @@ error:
 	ped_constraint_destroy (constraint_any);
 	return 0;
 }
+
+#define TQ84_DEBUG_ENABLED
+#define TQ84_DEBUG_TO_FILE
+#include "../../tq84-c-debug/tq84_debug.h"
 
 #include "pt-common.h"
 PT_define_limit_functions (sun)

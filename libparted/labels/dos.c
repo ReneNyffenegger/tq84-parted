@@ -250,17 +250,21 @@ msdos_probe (const PedDevice *dev)
                 return 0;
 
 	void *label;
-  TQ84_DEBUG("ptt_read_sector");
+  TQ84_DEBUG("calling ptt_read_sector");
 	if (!ptt_read_sector (dev, 0, &label)) {
     TQ84_DEBUG("return 0");
 		return 0;
   }
-
+  
+  TQ84_DEBUG("ptt_read_sector did not return 0, cast sector to a DosRawTable");
 	part_table = (DosRawTable *) label;
 
 	/* check magic */
+  TQ84_DEBUG("going to Check magic");
 	if (PED_LE16_TO_CPU (part_table->magic) != MSDOS_MAGIC)
 		goto probe_fail;
+
+  TQ84_DEBUG("Check magic succeeded");
 
 	/* If this is a FAT fs, fail here.  Checking for the FAT signature
 	 * has some false positives; instead, do what the Linux kernel does
@@ -299,10 +303,13 @@ msdos_probe (const PedDevice *dev)
 	 * Someone made the signatures the same (very clever).  Since
 	 * PC98 has some idiosyncracies with it's boot-loader, it's detection
 	 * is more reliable */
+  TQ84_DEBUG("ENABLE_PC98, calling ped_disk_type_get(pc98)");
 	disk_type = ped_disk_type_get ("pc98");
+  TQ84_DEBUG("calling pc98->ops->probe");
 	if (disk_type && disk_type->ops->probe (dev))
 		goto probe_fail;
 #endif /* ENABLE_PC98 */
+  TQ84_DEBUG("Apparently not a pc98");
 
 	free (label);
   TQ84_DEBUG("return 1");

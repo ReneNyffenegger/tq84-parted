@@ -24,6 +24,10 @@
 
 #include "pt-tools.h"
 
+#define TQ84_DEBUG_ENABLED
+#define TQ84_DEBUG_TO_FILE
+#include "../../tq84-c-debug/tq84_debug.h"
+
 #if ENABLE_NLS
 #  include <libintl.h>
 #  define _(String) dgettext (PACKAGE, String)
@@ -140,19 +144,29 @@ pc98_check_magic (const PC98RawTable *part_table)
 static int
 pc98_check_ipl_signature (const PC98RawTable *part_table)
 {
-	if (memcmp (part_table->boot_code + 4, "IPL1", 4) == 0)
+  TQ84_DEBUG_INDENT_T("pc98_check_ipl_signature");
+	if (memcmp (part_table->boot_code + 4, "IPL1", 4) == 0) {
+    TQ84_DEBUG("return 1 (a)");
 		return 1;
-	else if (memcmp (part_table->boot_code + 4, "Linux 98", 8) == 0)
+  }
+	else if (memcmp (part_table->boot_code + 4, "Linux 98", 8) == 0) {
+    TQ84_DEBUG("return 1 (b)");
 		return 1;
-	else if (memcmp (part_table->boot_code + 4, "GRUB/98 ", 8) == 0)
+  }
+	else if (memcmp (part_table->boot_code + 4, "GRUB/98 ", 8) == 0) {
+    TQ84_DEBUG("return 1 (c)");
 		return 1;
-	else
+  }
+	else {
+    TQ84_DEBUG("return 0");
 		return 0;
+  }
 }
 
 static int
 pc98_probe (const PedDevice *dev)
 {
+  TQ84_DEBUG_INDENT_T("pc98_probe");
 	PC98RawTable		part_table;
 
 	PED_ASSERT (dev != NULL);
@@ -160,12 +174,16 @@ pc98_probe (const PedDevice *dev)
         if (dev->sector_size != 512)
                 return 0;
 
-	if (!ped_device_read (dev, &part_table, 0, 2))
+	if (!ped_device_read (dev, &part_table, 0, 2)) {
+    TQ84_DEBUG("!ped_device_read, return 0");
 		return 0;
+  }
 
 	/* check magic */
-	if (!pc98_check_magic (&part_table))
+	if (!pc98_check_magic (&part_table)) {
+    TQ84_DEBUG("!pc98_check_magic, return 0");
 		return 0;
+  }
 
 	/* check for boot loader signatures */
 	return pc98_check_ipl_signature (&part_table);
@@ -806,6 +824,7 @@ static PedDiskType pc98_disk_type = {
 void
 ped_disk_pc98_init ()
 {
+  TQ84_DEBUG_INDENT_T("ped_disk_pc98_init");
 	PED_ASSERT (sizeof (PC98RawTable) == 512 * 2);
 	ped_disk_type_register (&pc98_disk_type);
 }

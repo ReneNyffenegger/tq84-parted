@@ -25,6 +25,10 @@
 #include "dvh.h"
 #include "pt-tools.h"
 
+#define TQ84_DEBUG_ENABLED
+#define TQ84_DEBUG_TO_FILE
+#include "../../tq84-c-debug/tq84_debug.h"
+
 #if ENABLE_NLS
 #  include <libintl.h>
 #  define _(String) dgettext (PACKAGE, String)
@@ -63,6 +67,7 @@ static PedDiskType dvh_disk_type;
 static int
 dvh_probe (const PedDevice *dev)
 {
+  TQ84_DEBUG_INDENT_T("dvh_probe");
 	struct volume_header *vh;
 
 	void *label;

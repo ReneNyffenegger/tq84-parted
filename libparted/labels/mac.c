@@ -33,6 +33,10 @@
 #include "misc.h"
 #include "pt-tools.h"
 
+#define TQ84_DEBUG_ENABLED
+#define TQ84_DEBUG_TO_FILE
+#include "../../tq84-c-debug/tq84_debug.h"
+
 /* struct's hacked from Linux source:  fs/partitions/mac.h
  * I believe it was originally written by Paul Mackerras (from comments in
  * Quik source)
@@ -200,6 +204,7 @@ _rawpart_check_signature (MacRawPartition* raw_part)
 static int
 mac_probe (const PedDevice * dev)
 {
+  TQ84_DEBUG_INDENT_T("mac_probe");
 	PED_ASSERT (dev != NULL);
 
         if (dev->sector_size < sizeof (MacRawDisk))

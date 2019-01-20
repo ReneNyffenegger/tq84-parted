@@ -25,6 +25,10 @@
 
 #include "pt-tools.h"
 
+#define TQ84_DEBUG_ENABLED
+#define TQ84_DEBUG_TO_FILE
+#include "../../tq84-c-debug/tq84_debug.h"
+
 #if ENABLE_NLS
 #  include <libintl.h>
 #  define _(String) dgettext (PACKAGE, String)
@@ -42,6 +46,7 @@ static void loop_free (PedDisk* disk);
 static int
 loop_probe (const PedDevice* dev)
 {
+  TQ84_DEBUG_INDENT_T("loop_probe");
 	PedDisk *disk = loop_alloc (dev);
 	if (!disk)
 		goto error;

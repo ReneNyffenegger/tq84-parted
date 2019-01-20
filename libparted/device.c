@@ -250,8 +250,10 @@ ped_device_open (PedDevice* dev)
 	PED_ASSERT (dev != NULL);
 	PED_ASSERT (!dev->external_mode);
 
-	if (dev->open_count)
+	if (dev->open_count) {
+    TQ84_DEBUG("open_count, calling ped_architecture->dev_ops->refresh_open");
 		status = ped_architecture->dev_ops->refresh_open (dev);
+  }
 	else {
     TQ84_DEBUG("! open_count, calling ped_architecture->dev_ops->open");
 		status = ped_architecture->dev_ops->open (dev);

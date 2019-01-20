@@ -41,6 +41,10 @@
 
 #include "misc.h"
 
+#define TQ84_DEBUG_ENABLED
+#define TQ84_DEBUG_TO_FILE
+#include "../../tq84-c-debug/tq84_debug.h"
+
 /* String manipulation */
 static void _amiga_set_bstr (const char *cstr, char *bstr, int maxsize) {
 	int size = strlen (cstr);
@@ -330,6 +334,7 @@ static PedDiskType amiga_disk_type;
 static int
 amiga_probe (const PedDevice *dev)
 {
+  TQ84_DEBUG_INDENT_T("amiga_probe");
 	struct RigidDiskBlock *rdb;
 	uint32_t found;
 	PED_ASSERT(dev != NULL);
