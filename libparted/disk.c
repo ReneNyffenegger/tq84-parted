@@ -109,8 +109,15 @@ PedDiskType*
 ped_disk_type_get_next (PedDiskType const *type)
 {
   TQ84_DEBUG_INDENT_T("ped_disk_type_get_next");
-	if (type)
+	if (type) {
+    if (type->next) {
+      TQ84_DEBUG("returning type with name = %s", type->next->name);
+    }
+    else {
+      TQ84_DEBUG("returning null");
+    }
 		return type->next;
+  }
 	else
 		return disk_types;
 }
