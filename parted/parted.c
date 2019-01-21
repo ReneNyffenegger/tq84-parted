@@ -1137,9 +1137,11 @@ do_print (PedDevice** dev)
             StrList *row1;
 
             if (ped_unit_get_default() == PED_UNIT_CHS) {
+                    TQ84_DEBUG("ped_unit_get_default == PED_UNIT_CHS");
                     row1 = str_list_create (_("Number"), _("Start"),
                                                _("End"), NULL);
             } else {
+                    TQ84_DEBUG("ped_unit_get_default != PED_UNIT_CHS");
                     row1 = str_list_create (_("Number"), _("Start"),
                                                _("End"), _("Size"), NULL);
             }

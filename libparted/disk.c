@@ -214,7 +214,7 @@ ped_disk_new (PedDevice* dev)
 			dev->path);
 		goto error_close_dev;
 	}
-  TQ84_DEBUG("found type->name = %s", type->name);
+  TQ84_DEBUG("found type->name = %s, going to call ped_disk_new_fresh", type->name);
 	disk = ped_disk_new_fresh (dev, type);
 	if (!disk)
 		goto error_close_dev;
@@ -390,6 +390,7 @@ error:
 PedDisk*
 ped_disk_new_fresh (PedDevice* dev, const PedDiskType* type)
 {
+  TQ84_DEBUG_INDENT_T("ped_disk_new_fresh, dev->path = %s, type->name = %s", dev->path, type->name);
 	PedDisk*	disk;
 
 	PED_ASSERT (dev != NULL);
@@ -679,7 +680,7 @@ ped_disk_type_check_feature (const PedDiskType* disk_type,
 			     PedDiskTypeFeature feature)
 {
 
-  TQ84_DEBUG_INDENT_T("ped_disk_type_check_feature");
+  TQ84_DEBUG_INDENT_T("ped_disk_type_check_feature, name = %s, feature = %d", disk_type->name, feature);
 	return (disk_type->features & feature) != 0;
 }
 
@@ -1294,12 +1295,14 @@ ped_partition_new (const PedDisk* disk, PedPartitionType type,
 		   const PedFileSystemType* fs_type, PedSector start,
 		   PedSector end)
 {
+  TQ84_DEBUG_INDENT_T("ped_partition_new");
 	int		supports_extended;
 	PedPartition*	part;
 
 	PED_ASSERT (disk != NULL);
 	PED_ASSERT (disk->type->ops->partition_new != NULL);
 
+  TQ84_DEBUG("Going to call ped_disk_type_check_feature");
 	supports_extended = ped_disk_type_check_feature (disk->type,
 			    	PED_DISK_TYPE_EXTENDED);
 
@@ -1469,6 +1472,7 @@ ped_partition_set_system (PedPartition* part, const PedFileSystemType* fs_type)
 static int
 _assert_partition_name_feature (const PedDiskType* disk_type)
 {
+  TQ84_DEBUG_INDENT_T("_assert_partition_name_feature");
 	if (!ped_disk_type_check_feature (
 			disk_type, PED_DISK_TYPE_PARTITION_NAME)) {
 		ped_exception_throw (
@@ -1870,6 +1874,7 @@ _disk_check_part_overlaps (PedDisk* disk, PedPartition* part)
 static int
 _partition_check_basic_sanity (PedDisk* disk, PedPartition* part)
 {
+  TQ84_DEBUG_INDENT_T("_partition_check_basic_sanity");
 	PedPartition*	ext_part = ped_disk_extended_partition (disk);
 
 	PED_ASSERT (part->disk == disk);
