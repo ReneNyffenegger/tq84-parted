@@ -1170,8 +1170,10 @@ do_print (PedDevice** dev)
                    TQ84_DEBUG("part->num: %d", part->num);
 
                     if ((!has_free_arg && !ped_partition_is_active(part)) ||
-                        part->type & PED_PARTITION_METADATA)
+                        part->type & PED_PARTITION_METADATA) {
+                            TQ84_DEBUG("continue");
                             continue;
+                    }
 
                     tmp = ped_malloc (4);
 

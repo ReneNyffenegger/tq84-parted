@@ -199,7 +199,7 @@ ped_disk_new (PedDevice* dev)
 {
 	PedDiskType*	type;
 	PedDisk*	disk;
-  TQ84_DEBUG_INDENT_T("ped_disk_new");
+  TQ84_DEBUG_INDENT_T("ped_disk_new (read partition table off a device)");
 
 	PED_ASSERT (dev != NULL);
 
@@ -218,6 +218,7 @@ ped_disk_new (PedDevice* dev)
 	disk = ped_disk_new_fresh (dev, type);
 	if (!disk)
 		goto error_close_dev;
+  TQ84_DEBUG("calling type->ops->read(disk)");
 	if (!type->ops->read (disk))
 		goto error_destroy_disk;
 	disk->needs_clobber = 0;
@@ -236,6 +237,7 @@ error:
 static int
 _add_duplicate_part (PedDisk* disk, PedPartition* old_part)
 {
+  TQ84_DEBUG_INDENT_T("_add_duplicate_part");
 	PedPartition*	new_part;
 	int ret;
 
@@ -271,6 +273,7 @@ error:
 PedDisk*
 ped_disk_duplicate (const PedDisk* old_disk)
 {
+  TQ84_DEBUG_INDENT_T("ped_disk_duplicate");
 	PedDisk*	new_disk;
 	PedPartition*	old_part;
 
@@ -391,7 +394,7 @@ error:
 PedDisk*
 ped_disk_new_fresh (PedDevice* dev, const PedDiskType* type)
 {
-  TQ84_DEBUG_INDENT_T("ped_disk_new_fresh, dev->path = %s, type->name = %s", dev->path, type->name);
+  TQ84_DEBUG_INDENT_T("ped_disk_new_fresh (create partition table in memory), dev->path = %s, type->name = %s", dev->path, type->name);
 	PedDisk*	disk;
 
 	PED_ASSERT (dev != NULL);
@@ -401,14 +404,18 @@ ped_disk_new_fresh (PedDevice* dev, const PedDiskType* type)
 	PED_ASSERT (bios_geom->sectors != 0);
 	PED_ASSERT (bios_geom->heads != 0);
 
+  TQ84_DEBUG_INDENT_T("Calling type->ops->alloc(dev)");
 	disk = type->ops->alloc (dev);
+  TQ84_DEBUG("returned from type->ops->alloc(dev)");
 	if (!disk)
        		goto error;
+        TQ84_DEBUG("Calling _disk_pop_update_mode");
         if (!_disk_pop_update_mode (disk))
                 goto error_destroy_disk;
 	PED_ASSERT (disk->update_mode == 0);
 
 	disk->needs_clobber = 1;
+  TQ84_DEBUG("return disk");
 	return disk;
 
 error_destroy_disk:
@@ -1091,6 +1098,7 @@ _alloc_extended_freespace (PedDisk* disk)
 	}
 
 	if (last_end < extended_part->geom.end) {
+    TQ84_DEBUG("calling ped_partition_new");
 		free_space = ped_partition_new (
 				disk,
 				PED_PARTITION_FREESPACE | PED_PARTITION_LOGICAL,
@@ -1123,26 +1131,35 @@ _disk_alloc_freespace (PedDisk* disk)
 	last = NULL;
 	last_end = -1;
 
+{ TQ84_DEBUG_INDENT_T("for walk = disk -> part_list …");
 	for (walk = disk->part_list; walk; walk = walk->next) {
+    TQ84_DEBUG("next walk");
 		if (walk->geom.start > last_end + 1) {
+      TQ84_DEBUG("Calling ped_partition_new");
 			free_space = ped_partition_new (disk,
 					PED_PARTITION_FREESPACE, NULL,
 					last_end + 1, walk->geom.start - 1);
+      TQ84_DEBUG("Calling _disk_raw_insert_before");
 			_disk_raw_insert_before (disk, walk, free_space);
 		}
 
 		last = walk;
 		last_end = last->geom.end;
 	}
+}
 
 	if (last_end < disk->dev->length - 1) {
 		free_space = ped_partition_new (disk,
 					PED_PARTITION_FREESPACE, NULL,
 					last_end + 1, disk->dev->length - 1);
-		if (last)
+		if (last) {
+      TQ84_DEBUG("list_part? Calling _disk_raw_insert_after");
 			return _disk_raw_insert_after (disk, last, free_space);
-		else
+    }
+		else {
+      TQ84_DEBUG("Assigning free_space to part_list");
 			disk->part_list = free_space;
+    }
 	}
 
 	return 1;
@@ -1180,9 +1197,11 @@ _disk_push_update_mode (PedDisk* disk)
 static int
 _disk_pop_update_mode (PedDisk* disk)
 {
+  TQ84_DEBUG_INDENT_T("_disk_pop_update_mode");
 	PED_ASSERT (disk->update_mode);
 
 	if (disk->update_mode == 1) {
+    TQ84_DEBUG("disk->update_mode == 1");
 	/* re-allocate metadata BEFORE leaving update mode, to prevent infinite
 	 * recursion (metadata allocation requires update mode)
 	 */
@@ -1191,8 +1210,10 @@ _disk_pop_update_mode (PedDisk* disk)
 			return 0;
 #endif
 
+    TQ84_DEBUG("Calling _disk_alloc_metadata");
 		_disk_alloc_metadata (disk);
 		disk->update_mode--;
+    TQ84_DEBUG("Calling _disk_alloc_freespace");
 		_disk_alloc_freespace (disk);
 
 #ifdef DEBUG
@@ -1237,11 +1258,13 @@ _ped_partition_alloc (const PedDisk* disk, PedPartitionType type,
 	part->next = NULL;
 
 	part->disk = (PedDisk*) disk;
+  TQ84_DEBUG("Calling ped_geometry_init");
 	if (!ped_geometry_init (&part->geom, disk->dev, start, end - start + 1))
 		goto error_free_part;
 
 	part->num = -1;
 	part->type = type;
+  TQ84_DEBUG("Setting part_list to NULL");
 	part->part_list = NULL;
 	part->fs_type = fs_type;
 
@@ -1306,7 +1329,10 @@ ped_partition_new (const PedDisk* disk, PedPartitionType type,
 		   const PedFileSystemType* fs_type, PedSector start,
 		   PedSector end)
 {
-  TQ84_DEBUG_INDENT_T("ped_partition_new");
+  TQ84_DEBUG_INDENT_T("ped_partition_new, type = %d (0 = Normal, 1 =  Logical, 2 = Extended, 4 = Freepsace, 8 = Metadata, 16 = Protected), start = %lld, end = %lld", type, start, end);
+  if (fs_type) {
+    TQ84_DEBUG("fs_type->name = %s", fs_type->name);
+  }
 	int		supports_extended;
 	PedPartition*	part;
 
@@ -1329,11 +1355,13 @@ ped_partition_new (const PedDisk* disk, PedPartitionType type,
 		goto error;
 	}
 
+  TQ84_DEBUG("Going to call disk->type->ops->partition_new / start = %lld, end = %lld", start, end);
 	part = disk->type->ops->partition_new (disk, type, fs_type, start, end);
 	if (!part)
 		goto error;
 
 	if (fs_type || part->type == PED_PARTITION_EXTENDED) {
+    TQ84_DEBUG("Going to call ped_partition_set_system");
 		if (!ped_partition_set_system (part, fs_type))
 			goto error_destroy_part;
 	}
@@ -1559,6 +1587,7 @@ ped_partition_get_name (const PedPartition* part)
 PedPartition*
 ped_disk_extended_partition (const PedDisk* disk)
 {
+  TQ84_DEBUG_INDENT_T("ped_disk_extended_partition");
 	PedPartition*		walk;
 
 	PED_ASSERT (disk != NULL);
@@ -1582,7 +1611,7 @@ ped_disk_extended_partition (const PedDisk* disk)
 PedPartition*
 ped_disk_next_partition (const PedDisk* disk, const PedPartition* part)
 {
-//TQ84_DEBUG_INDENT_T("ped_disk_next_partition");
+  TQ84_DEBUG_INDENT_T("ped_disk_next_partition");
 	PED_ASSERT (disk != NULL);
 
 	if (!part)
@@ -1717,6 +1746,7 @@ _disk_raw_insert_before (PedDisk* disk, PedPartition* loc, PedPartition* part)
 static int
 _disk_raw_insert_after (PedDisk* disk, PedPartition* loc, PedPartition* part)
 {
+  TQ84_DEBUG_INDENT_T("_disk_raw_insert_after");
 	PED_ASSERT (disk != NULL);
 	PED_ASSERT (loc != NULL);
 	PED_ASSERT (part != NULL);
@@ -1760,6 +1790,7 @@ _disk_raw_remove (PedDisk* disk, PedPartition* part)
 static int
 _disk_raw_add (PedDisk* disk, PedPartition* part)
 {
+  TQ84_DEBUG_INDENT_T("_disk_raw_add");
 	PedPartition*	walk;
 	PedPartition*	last;
 	PedPartition*	ext_part;
@@ -2029,6 +2060,7 @@ int
 ped_disk_add_partition (PedDisk* disk, PedPartition* part,
 			const PedConstraint* constraint)
 {
+  TQ84_DEBUG_INDENT_T("ped_disk_add_partition");
 	PedConstraint*	overlap_constraint = NULL;
 	PedConstraint*	constraints = NULL;
 
@@ -2100,6 +2132,7 @@ error:
 int
 ped_disk_remove_partition (PedDisk* disk, PedPartition* part)
 {
+  TQ84_DEBUG_INDENT_T("ped_disk_enumerate_partitions");
 	PED_ASSERT (disk != NULL);
 	PED_ASSERT (part != NULL);
 
@@ -2124,6 +2157,7 @@ ped_disk_delete_all_logical (PedDisk* disk);
 int
 ped_disk_delete_partition (PedDisk* disk, PedPartition* part)
 {
+  TQ84_DEBUG_INDENT_T("ped_disk_delete_partition");
 	PED_ASSERT (disk != NULL);
 	PED_ASSERT (part != NULL);
 
@@ -2142,6 +2176,7 @@ ped_disk_delete_partition (PedDisk* disk, PedPartition* part)
 static int
 ped_disk_delete_all_logical (PedDisk* disk)
 {
+  TQ84_DEBUG_INDENT_T("ped_disk_delete_all_logical");
 	PedPartition*		walk;
 	PedPartition*		next;
 	PedPartition*		ext_part;
@@ -2167,6 +2202,7 @@ ped_disk_delete_all_logical (PedDisk* disk)
 int
 ped_disk_delete_all (PedDisk* disk)
 {
+  TQ84_DEBUG_INDENT_T("ped_disk_delete_all");
 	PedPartition*		walk;
 	PedPartition*		next;
 
@@ -2207,6 +2243,7 @@ ped_disk_set_partition_geom (PedDisk* disk, PedPartition* part,
 			     const PedConstraint* constraint,
 			     PedSector start, PedSector end)
 {
+  TQ84_DEBUG_INDENT_T("ped_disk_set_partition_geom");
 	PedConstraint*	overlap_constraint = NULL;
 	PedConstraint*	constraints = NULL;
 	PedGeometry	old_geom;
@@ -2368,6 +2405,7 @@ ped_disk_get_max_partition_geometry (PedDisk* disk, PedPartition* part,
 int
 ped_disk_minimize_extended_partition (PedDisk* disk)
 {
+  TQ84_DEBUG_INDENT_T("ped_disk_minimize_extended_partition");
 	PedPartition*		first_logical;
 	PedPartition*		last_logical;
 	PedPartition*		walk;

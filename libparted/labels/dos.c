@@ -502,6 +502,7 @@ static PedSector _GL_ATTRIBUTE_PURE
 linear_start (const PedDisk* disk, const DosRawPartition* raw_part,
 	      PedSector offset)
 {
+  TQ84_DEBUG_INDENT_T("linear_start offset = %lld", offset);
 	PED_ASSERT (disk != NULL);
 	PED_ASSERT (raw_part != NULL);
 
@@ -931,6 +932,7 @@ static PedPartition*
 raw_part_parse (const PedDisk* disk, const DosRawPartition* raw_part,
 	        PedSector lba_offset, PedPartitionType type)
 {
+  TQ84_DEBUG_INDENT_T("raw_part_parse");
 	PedPartition* part;
 	DosPartitionData* dos_data;
 
@@ -970,6 +972,7 @@ raw_part_parse (const PedDisk* disk, const DosRawPartition* raw_part,
 static int
 read_table (PedDisk* disk, PedSector sector, int is_extended_table)
 {
+  TQ84_DEBUG_INDENT_T("Read_table, sector = %lld, is_extended_table = %d", sector, is_extended_table);
 	int			i;
 	DosRawTable*		table;
 	DosRawPartition*	raw_part;
@@ -1005,11 +1008,15 @@ read_table (PedDisk* disk, PedSector sector, int is_extended_table)
 	}
 #endif
 
+ { TQ84_DEBUG_INDENT_T("0 to DOS_N_PRI_PARTITIONS");
 	/* parse the partitions from this table */
 	for (i = 0; i < DOS_N_PRI_PARTITIONS; i++) {
+    TQ84_DEBUG("i = %d", i);
 		raw_part = &table->partitions [i];
-		if (raw_part->type == PARTITION_EMPTY || !raw_part->length)
+		if (raw_part->type == PARTITION_EMPTY || !raw_part->length) {
+      TQ84_DEBUG("raw_part->type == PARTITION_EMPTY, continue");
 			continue;
+    }
 
 		/* process nested extended partitions after normal logical
 		 * partitions, to make sure we get the order right.
@@ -1038,6 +1045,7 @@ read_table (PedDisk* disk, PedSector sector, int is_extended_table)
 		else
 			type = PED_PARTITION_NORMAL;
 
+    TQ84_DEBUG("Calling raw_part_parse");
 		part = raw_part_parse (disk, raw_part, lba_offset, type);
 		if (!part)
 			goto error;
@@ -1055,12 +1063,15 @@ read_table (PedDisk* disk, PedSector sector, int is_extended_table)
 
 		/* non-nested extended partition */
 		if (part->type == PED_PARTITION_EXTENDED) {
+      TQ84_DEBUG("part->type == PED_PARTITION_EXTENDED, going to read_table");
 			if (!read_table (disk, part->geom.start, 1))
 				goto error;
 		}
 	}
+ }
 
 	if (is_extended_table) {
+    TQ84_DEBUG("is_extended_table");
 		/* process the nested extended partitions */
 		for (i = 0; i < DOS_N_PRI_PARTITIONS; i++) {
 			PedSector part_start;
@@ -1078,6 +1089,7 @@ read_table (PedDisk* disk, PedSector sector, int is_extended_table)
 				 */
 				continue;
 			}
+      TQ84_DEBUG("Going to read_table");
 			if (!read_table (disk, part_start, 1))
 				goto error;
 		}
@@ -1096,10 +1108,12 @@ error:
 static int
 msdos_read (PedDisk* disk)
 {
+  TQ84_DEBUG_INDENT_T("msdos_read");
 	PED_ASSERT (disk != NULL);
 	PED_ASSERT (disk->dev != NULL);
 
 	ped_disk_delete_all (disk);
+  TQ84_DEBUG("calling read_table");
 	if (!read_table (disk, 0, 0))
 		return 0;
 
@@ -1185,6 +1199,7 @@ static int
 write_ext_table (const PedDisk* disk,
                  PedSector sector, const PedPartition* logical)
 {
+  TQ84_DEBUG_INDENT_T("write_ext_table");
 	PedPartition*		part;
 	PedSector		lba_offset;
 
@@ -1192,6 +1207,7 @@ write_ext_table (const PedDisk* disk,
 	PED_ASSERT (ped_disk_extended_partition (disk) != NULL);
 	PED_ASSERT (logical != NULL);
 
+  TQ84_DEBUG("Calling ped_disk_extended_partition");
 	lba_offset = ped_disk_extended_partition (disk)->geom.start;
 
 	void* s;
@@ -1336,6 +1352,7 @@ msdos_partition_new (const PedDisk* disk, PedPartitionType part_type,
 		     const PedFileSystemType* fs_type,
 		     PedSector start, PedSector end)
 {
+  TQ84_DEBUG_INDENT_T("msdos_partition_new, sector start = %lld / end = %lld", start, end);
 	PedPartition*		part;
 	DosPartitionData*	dos_data;
 
@@ -1372,6 +1389,7 @@ error:
 static PedPartition*
 msdos_partition_duplicate (const PedPartition* part)
 {
+  TQ84_DEBUG_INDENT_T("msdos_partition_duplicate");
 	PedPartition*		new_part;
 	DosPartitionData*	new_dos_data;
 	DosPartitionData*	old_dos_data;
@@ -2214,6 +2232,7 @@ static int
 add_metadata_part (PedDisk* disk, PedPartitionType type, PedSector start,
 		   PedSector end)
 {
+  TQ84_DEBUG_INDENT_T("add_metadata_part");
 	PedPartition*		new_part;
 
 	PED_ASSERT (disk != NULL);
@@ -2242,6 +2261,7 @@ error:
 static int
 add_logical_part_metadata (PedDisk* disk, const PedPartition* log_part)
 {
+  TQ84_DEBUG_INDENT_T("add_logical_part_metadata");
 	PedPartition*	ext_part = ped_disk_extended_partition (disk);
 	PedPartition*	prev = log_part->prev;
 	PedCHSGeometry	bios_geom;
@@ -2275,6 +2295,7 @@ add_logical_part_metadata (PedDisk* disk, const PedPartition* log_part)
 
 	PED_ASSERT (metadata_length > 0);
 
+  TQ84_DEBUG("Calling add_metadata_part");
 	return add_metadata_part (disk, PED_PARTITION_LOGICAL,
 				  metadata_start, metadata_end);
 }
@@ -2342,6 +2363,7 @@ get_end_last_nonfree_part (const PedDisk* disk, PedSector *sector)
 static int
 add_startend_metadata (PedDisk* disk)
 {
+  TQ84_DEBUG_INDENT_T("add_startend_metadata");
 	PedDevice* dev = disk->dev;
 	PedSector cyl_size = dev->bios_geom.sectors * dev->bios_geom.heads;
 	PedSector init_start, init_end, final_start, final_end;
@@ -2365,6 +2387,7 @@ add_startend_metadata (PedDisk* disk)
 
 	// Create the metadata partitions.
 	// init_end <= dev->length for devices that are _real_ small.
+  TQ84_DEBUG("Create the metadata partition");
 	if (init_start < init_end &&
 			init_end <= dev->length &&
 			!add_metadata_part (disk, PED_PARTITION_NORMAL,
@@ -2385,6 +2408,7 @@ add_startend_metadata (PedDisk* disk)
 static int
 msdos_alloc_metadata (PedDisk* disk)
 {
+  TQ84_DEBUG_INDENT_T("msdos_alloc_metadata");
 	PedPartition*		ext_part;
 
 	PED_ASSERT (disk != NULL);

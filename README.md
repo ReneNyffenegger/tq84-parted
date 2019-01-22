@@ -14,12 +14,16 @@ libparted/disk.c writes:
 
 **`PedPartition`** represents a partition (`include/parted/disk.h`).
 
-**`PedDiskType`** is defined in `include/parted/disk.h`. It seems as though it represents a partition (but see also `PedPartition`).
+**`PedDiskType`** is defined in `include/parted/disk.h`. It seems as though it represents a partition-type (such as msdos) (but see also `PedPartition`).
 `PedDiskTypeFeature` is a bitmap of supported features, such as PED_DISK_TYPE_EXTENDED, PED_DISK_TYPE_PARTITION_NAME etc.
 
 **`PedGeometry`** defines a geometry (that is: start sector, length (or count?) of sectors and end sector) and is defined in `include/parted/geom.h`.
 
 **`PedFileSystemType`** describes the type of a file system: `include/parted/filesys.h`
+
+**`PedPartitionType`** apparently is either 
+
+**`DosDiskData`**
 
 MBR/dos related things seem to be stored under libparted/labels/dos.c
 
