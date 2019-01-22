@@ -1133,7 +1133,7 @@ do_print (PedDevice** dev)
 
         PedPartition* part;
         if (!opt_machine_mode) {
-            TQ84_DEBUG("! opt_machine_mode");
+            TQ84_DEBUG("! opt_machine_mode (printing header)");
             StrList *row1;
 
             if (ped_unit_get_default() == PED_UNIT_CHS) {
@@ -1156,15 +1156,18 @@ do_print (PedDevice** dev)
 
             str_list_append (row1, _("Flags"));
 
+            TQ84_DEBUG("Flags (last column) printed");
 
+            TQ84_DEBUG_INDENT_T("calling table_new");
             table = table_new (str_list_length(row1));
 
             table_add_row_from_strlist (table, row1);
 
+        { TQ84_DEBUG_INDENT_T("Iterating over partitions (using ped_disk_next_partition)");
             for (part = ped_disk_next_partition (disk, NULL); part;
                  part = ped_disk_next_partition (disk, part)) {
 
-                    TQ84_DEBUG_INDENT_T("Iterating over partition %d", part->num);
+                   TQ84_DEBUG("part->num: %d", part->num);
 
                     if ((!has_free_arg && !ped_partition_is_active(part)) ||
                         part->type & PED_PARTITION_METADATA)
@@ -1226,6 +1229,7 @@ do_print (PedDevice** dev)
                     free (end);
                     free (size);
             }
+        }
 
             table_rendered = table_render (table);
 #ifdef ENABLE_NLS

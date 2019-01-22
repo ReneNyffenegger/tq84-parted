@@ -221,6 +221,7 @@ ped_disk_new (PedDevice* dev)
 	if (!type->ops->read (disk))
 		goto error_destroy_disk;
 	disk->needs_clobber = 0;
+  TQ84_DEBUG("going to call ped_device_close");
 	ped_device_close (dev);
 	return disk;
 
@@ -419,6 +420,7 @@ error:
 PedDisk*
 _ped_disk_alloc (const PedDevice* dev, const PedDiskType* disk_type)
 {
+  TQ84_DEBUG_INDENT_T("_ped_disk_alloc");
 	PedDisk*	disk;
 
 	disk = (PedDisk*) ped_malloc (sizeof (PedDisk));
@@ -724,6 +726,7 @@ ped_disk_get_last_partition_num (const PedDisk* disk)
 			highest = walk->num;
 	}
 
+  TQ84_DEBUG("returning highest = %d", highest);
 	return highest;
 }
 
@@ -1057,6 +1060,7 @@ _disk_remove_freespace (PedDisk* disk)
 static int
 _alloc_extended_freespace (PedDisk* disk)
 {
+  TQ84_DEBUG_INDENT_T("_alloc_extended_freespace");
 	PedSector	last_end;
 	PedPartition*	walk;
 	PedPartition*	last;
@@ -1072,6 +1076,7 @@ _alloc_extended_freespace (PedDisk* disk)
 
 	for (walk = extended_part->part_list; walk; walk = walk->next) {
 		if (walk->geom.start > last_end + 1) {
+      TQ84_DEBUG("calling ped_partition_new");
 			free_space = ped_partition_new (
 					disk,
 					PED_PARTITION_FREESPACE
@@ -1104,6 +1109,7 @@ _alloc_extended_freespace (PedDisk* disk)
 static int
 _disk_alloc_freespace (PedDisk* disk)
 {
+  TQ84_DEBUG_INDENT_T("_disk_alloc_freespace");
 	PedSector	last_end;
 	PedPartition*	walk;
 	PedPartition*	last;
@@ -1214,6 +1220,11 @@ _ped_partition_alloc (const PedDisk* disk, PedPartitionType type,
 		      const PedFileSystemType* fs_type,
 		      PedSector start, PedSector end)
 {
+//TQ84_DEBUG_INDENT_T("_ped_partition_alloc, fs_type->name = %s", fs_type->name);
+  TQ84_DEBUG_INDENT_T("_ped_partition_alloc");
+  if (fs_type) {
+    TQ84_DEBUG("fs_type->name: %s", fs_type->name);
+  }
 	PedPartition*	part;
 
 	PED_ASSERT (disk != NULL);
@@ -1571,6 +1582,7 @@ ped_disk_extended_partition (const PedDisk* disk)
 PedPartition*
 ped_disk_next_partition (const PedDisk* disk, const PedPartition* part)
 {
+//TQ84_DEBUG_INDENT_T("ped_disk_next_partition");
 	PED_ASSERT (disk != NULL);
 
 	if (!part)
