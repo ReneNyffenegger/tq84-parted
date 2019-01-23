@@ -160,6 +160,7 @@ PedFileSystemType fat32_type = {
 void
 ped_file_system_fat_init ()
 {
+  TQ84_DEBUG_INDENT_T("ped_file_system_fat_init");
 	if (sizeof (FatBootSector) != 512) {
 		ped_exception_throw (PED_EXCEPTION_BUG, PED_EXCEPTION_CANCEL,
 			_("GNU Parted was miscompiled: the FAT boot sector "

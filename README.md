@@ -1,4 +1,6 @@
 
+TODO: Apparently, msdos_read is the next function to check.
+
 libparted/disk.c writes:
  <i>Most programs will need to use ped_disk_new() or ped_disk_new_fresh() to get
  anything done.<br>
@@ -27,6 +29,9 @@ libparted/disk.c writes:
 
 MBR/dos related things seem to be stored under libparted/labels/dos.c
 
+**`RawCHS`** is defined in libparted/labels/dos.c 
+
 # See Also
 
   https://github.com/ReneNyffenegger/Partition-tables-and-file-systems
+

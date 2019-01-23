@@ -411,6 +411,11 @@ msdos_disk_is_flag_available (const PedDisk *disk, PedDiskFlag flag)
 static int
 chs_get_cylinder (const RawCHS* chs)
 {
+  TQ84_DEBUG_INDENT_T("chs_get_cylinder");
+  int ret = chs->cylinder + ((chs->sector >> 6) << 8);
+  TQ84_DEBUG("Return %d", ret);
+ 
+//TQ84_DEBUG_RETURN(chs->cylinder + ((chs->sector >> 6) << 8);
 	return chs->cylinder + ((chs->sector >> 6) << 8);
 }
 
@@ -431,7 +436,7 @@ static PedSector _GL_ATTRIBUTE_PURE
 chs_to_sector (const PedDevice* dev, const PedCHSGeometry *bios_geom,
 	       const RawCHS* chs)
 {
-  TQ84_DEBUG_INDENT_T("chs_to_sector");
+  TQ84_DEBUG_INDENT_T("chs_to_sector / head = %d, sector = %d, cylinder = %d", chs->head, chs->sector, chs->cylinder);
 	PedSector	c;		/* not measured in sectors, but need */
 	PedSector	h;		/* lots of bits */
 	PedSector	s;
@@ -558,11 +563,14 @@ disk_check_bios_geometry (const PedDisk* disk, PedCHSGeometry* bios_geom)
 
 	while ((part = ped_disk_next_partition (disk, part))) {
 		if (ped_partition_is_active (part)) {
-			if (!partition_check_bios_geometry (part, bios_geom))
+			if (!partition_check_bios_geometry (part, bios_geom)) {
+        TQ84_DEBUG("return 0");
 				return 0;
+      }
 		}
 	}
 
+  TQ84_DEBUG("return 1");
 	return 1;
 }
 
@@ -1118,7 +1126,9 @@ msdos_read (PedDisk* disk)
 		return 0;
 
 #ifndef DISCOVER_ONLY
+  TQ84_DEBUG("#ifndef DISCOVER_ONLY");
 	/* try to figure out the correct BIOS CHS values */
+  TQ84_DEBUG("going to call disk_check_bios_geometry");
 	if (!disk_check_bios_geometry (disk, &disk->dev->bios_geom)) {
 		PedCHSGeometry bios_geom = disk->dev->bios_geom;
 		disk_probe_bios_geometry (disk, &bios_geom);

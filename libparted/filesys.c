@@ -31,6 +31,10 @@
 #include <parted/parted.h>
 #include <parted/debug.h>
 
+#define TQ84_DEBUG_ENABLED
+#define TQ84_DEBUG_TO_FILE
+#include "../../tq84-c-debug/tq84_debug.h"
+
 #if ENABLE_NLS
 #  include <libintl.h>
 #  define _(String) dgettext (PACKAGE, String)
@@ -46,6 +50,7 @@ static PedFileSystemAlias*	fs_aliases = NULL;
 void
 ped_file_system_type_register (PedFileSystemType* fs_type)
 {
+  TQ84_DEBUG_INDENT_T("ped_file_system_type_register");
 	PED_ASSERT (fs_type != NULL);
 	PED_ASSERT (fs_type->ops != NULL);
 	PED_ASSERT (fs_type->name != NULL);

@@ -288,6 +288,7 @@ ped_disk_duplicate (const PedDisk* old_disk)
 
 	if (!_disk_push_update_mode (new_disk))
 		goto error_destroy_new_disk;
+{ TQ84_DEBUG_INDENT_T("for old_part = ped_disk_next_partition …");
 	for (old_part = ped_disk_next_partition (old_disk, NULL); old_part;
 	     old_part = ped_disk_next_partition (old_disk, old_part)) {
 		if (ped_partition_is_active (old_part)) {
@@ -297,6 +298,7 @@ ped_disk_duplicate (const PedDisk* old_disk)
 			}
 		}
 	}
+}
 	if (!_disk_pop_update_mode (new_disk))
 		goto error_destroy_new_disk;
 
@@ -1399,6 +1401,8 @@ ped_partition_destroy (PedPartition* part)
 int
 ped_partition_is_active (const PedPartition* part)
 {
+  TQ84_DEBUG_INDENT_T("ped_partition_is_active (active = neither METADATA nor FREE?), part->type = %d (0 = NORMAL, 1 = LOGICAL, 2 = EXTENDED, 4 = FREESPACE, 8 = METADATA, 16 = PROTECTED)", part->type);
+
 	PED_ASSERT (part != NULL);
 
 	return !(part->type & PED_PARTITION_FREESPACE
