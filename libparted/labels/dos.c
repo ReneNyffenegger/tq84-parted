@@ -422,6 +422,7 @@ chs_get_cylinder (const RawCHS* chs)
 static int
 chs_get_head (const RawCHS* chs)
 {
+  TQ84_DEBUG("chs_get_head, returning %d", chs->head);
 	return chs->head;
 }
 
@@ -429,6 +430,10 @@ chs_get_head (const RawCHS* chs)
 static int
 chs_get_sector (const RawCHS* chs)
 {
+  TQ84_DEBUG_INDENT_T("chs_get_sector");
+  int ret = (chs->sector & 0x3f) - 1;
+  TQ84_DEBUG("returning %d", ret);
+
 	return (chs->sector & 0x3f) - 1;
 }
 
@@ -445,13 +450,19 @@ chs_to_sector (const PedDevice* dev, const PedCHSGeometry *bios_geom,
 	PED_ASSERT (chs != NULL);
 
 	c = chs_get_cylinder (chs);
+  TQ84_DEBUG("c = %d", c);
 	h = chs_get_head (chs);
+  TQ84_DEBUG("h = %d", h);
 	s = chs_get_sector (chs);
+  TQ84_DEBUG("s = %d", s);
 
 	if (c > MAX_CHS_CYLINDER)		/* MAGIC: C/H/S is irrelevant */
 		return 0;
 	if (s < 0)
 		return 0;
+  int ret = (c * bios_geom->heads + h) * bios_geom->sectors + s;
+  TQ84_DEBUG("returning %d", ret);
+
 	return (c * bios_geom->heads + h) * bios_geom->sectors + s;
 }
 
