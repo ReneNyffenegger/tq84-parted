@@ -1,6 +1,8 @@
 
 TODO: Apparently, msdos_read is the next function to check.
 
+CHS -> LBA: https://de.wikipedia.org/wiki/Cylinder_Head_Sector
+
 libparted/disk.c writes:
  <i>Most programs will need to use ped_disk_new() or ped_disk_new_fresh() to get
  anything done.<br>

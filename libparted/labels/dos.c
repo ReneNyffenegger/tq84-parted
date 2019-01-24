@@ -132,6 +132,7 @@ struct _DosRawPartition {
 } __attribute__((packed));
 
 struct _DosRawTable {
+  // TQ84: the MBR?
 	char			boot_code [440];
 	uint32_t                mbr_signature;	/* really a unique ID */
 	uint16_t                Unknown;
@@ -518,22 +519,28 @@ static PedSector _GL_ATTRIBUTE_PURE
 linear_start (const PedDisk* disk, const DosRawPartition* raw_part,
 	      PedSector offset)
 {
-  TQ84_DEBUG_INDENT_T("linear_start offset = %lld", offset);
+  TQ84_DEBUG_INDENT_T("linear_start offset = %lld, raw_part->start = %lld", offset, raw_part->start);
 	PED_ASSERT (disk != NULL);
 	PED_ASSERT (raw_part != NULL);
 
-	return offset + PED_LE32_TO_CPU (raw_part->start);
+  PedSector ret = offset + PED_LE32_TO_CPU (raw_part->start);
+  TQ84_DEBUG("ret = %lld", ret);
+	return ret;
 }
 
 static PedSector _GL_ATTRIBUTE_PURE
 linear_end (const PedDisk* disk, const DosRawPartition* raw_part,
 	    PedSector offset)
 {
+  TQ84_DEBUG_INDENT_T("linear_end, offset = %lld", offset);
 	PED_ASSERT (disk != NULL);
 	PED_ASSERT (raw_part != NULL);
 
-	return (linear_start (disk, raw_part, offset)
+  PedSector ret = (linear_start (disk, raw_part, offset)
                 + (PED_LE32_TO_CPU (raw_part->length) - 1));
+
+  TQ84_DEBUG("ret = %lld", ret);
+	return ret;
 }
 
 #ifndef DISCOVER_ONLY
@@ -890,15 +897,18 @@ disk_probe_bios_geometry (const PedDisk* disk, PedCHSGeometry* bios_geom)
 static int _GL_ATTRIBUTE_PURE
 raw_part_is_extended (const DosRawPartition* raw_part)
 {
+  TQ84_DEBUG_INDENT_T("raw_part_is_extended, raw_part->type = %02x", raw_part->type);
 	PED_ASSERT (raw_part != NULL);
 
 	switch (raw_part->type) {
 	case PARTITION_DOS_EXT:
 	case PARTITION_EXT_LBA:
 	case PARTITION_LINUX_EXT:
+    TQ84_DEBUG("return 1 because type = PARTITION_DOS_EXT (0x05), PARTITION_EXT_LBA (0x0F) or PARTITION_LINUX_EXT (0x85)");
 		return 1;
 
 	default:
+    TQ84_DEBUG("return 0");
 		return 0;
 	}
 
@@ -951,13 +961,14 @@ static PedPartition*
 raw_part_parse (const PedDisk* disk, const DosRawPartition* raw_part,
 	        PedSector lba_offset, PedPartitionType type)
 {
-  TQ84_DEBUG_INDENT_T("raw_part_parse");
+  TQ84_DEBUG_INDENT_T("raw_part_parse, lba_offset = %lld, PedPartitionType = %d (0 = Normal, 1 =  Logical, 2 = Extended, 4 = Freepsace, 8 = Metadata, 16 = Protected)", lba_offset, type);
 	PedPartition* part;
 	DosPartitionData* dos_data;
 
 	PED_ASSERT (disk != NULL);
 	PED_ASSERT (raw_part != NULL);
 
+  TQ84_DEBUG("calling ped_partition_new");
 	part = ped_partition_new (
 		disk, type, NULL,
 		linear_start (disk, raw_part, lba_offset),
@@ -991,7 +1002,7 @@ raw_part_parse (const PedDisk* disk, const DosRawPartition* raw_part,
 static int
 read_table (PedDisk* disk, PedSector sector, int is_extended_table)
 {
-  TQ84_DEBUG_INDENT_T("Read_table, sector = %lld, is_extended_table = %d", sector, is_extended_table);
+  TQ84_DEBUG_INDENT_T("read_table, sector = %lld, is_extended_table = %d", sector, is_extended_table);
 	int			i;
 	DosRawTable*		table;
 	DosRawPartition*	raw_part;
@@ -1003,9 +1014,11 @@ read_table (PedDisk* disk, PedSector sector, int is_extended_table)
 	PED_ASSERT (disk->dev != NULL);
 
 	void *label = NULL;
+  TQ84_DEBUG("calling ptt_read_sector, sector = %lld", sector);
 	if (!ptt_read_sector (disk->dev, sector, &label))
 		goto error;
 
+  TQ84_DEBUG("Found 'table' (of type DosRawTable)");
         table = (DosRawTable *) label;
 
 	/* weird: empty extended partitions are filled with 0xf6 by PM */
@@ -1013,8 +1026,11 @@ read_table (PedDisk* disk, PedSector sector, int is_extended_table)
 	    && PED_LE16_TO_CPU (table->magic) == PARTITION_MAGIC_MAGIC)
 		goto read_ok;
 
+  TQ84_DEBUG("! read_ok !");
+
 #ifndef DISCOVER_ONLY
 	if (PED_LE16_TO_CPU (table->magic) != MSDOS_MAGIC) {
+    TQ84_DEBUG("!= MSDOS_MAGIC");
 		if (ped_exception_throw (
 			PED_EXCEPTION_ERROR, PED_EXCEPTION_IGNORE_CANCEL,
 			_("Invalid partition table on %s "
@@ -1030,7 +1046,7 @@ read_table (PedDisk* disk, PedSector sector, int is_extended_table)
  { TQ84_DEBUG_INDENT_T("0 to DOS_N_PRI_PARTITIONS");
 	/* parse the partitions from this table */
 	for (i = 0; i < DOS_N_PRI_PARTITIONS; i++) {
-    TQ84_DEBUG("i = %d", i);
+    TQ84_DEBUG_INDENT_T("i = %d", i);
 		raw_part = &table->partitions [i];
 		if (raw_part->type == PARTITION_EMPTY || !raw_part->length) {
       TQ84_DEBUG("raw_part->type == PARTITION_EMPTY, continue");
@@ -1040,12 +1056,16 @@ read_table (PedDisk* disk, PedSector sector, int is_extended_table)
 		/* process nested extended partitions after normal logical
 		 * partitions, to make sure we get the order right.
 		 */
-		if (is_extended_table && raw_part_is_extended (raw_part))
+		if (is_extended_table && raw_part_is_extended (raw_part)) {
+      TQ84_DEBUG("continue because is_extended_table and raw_part_is_extended");
 			continue;
+    }
 
 		lba_offset = is_extended_table ? sector : 0;
+    TQ84_DEBUG("determined lba_offset = %lld, is_extended_table = %d, sector = %lld", lba_offset, is_extended_table, sector);
 
 		if (linear_start (disk, raw_part, lba_offset) == sector) {
+      TQ84_DEBUG("linear_start ...");
 			if (ped_exception_throw (
 				PED_EXCEPTION_ERROR,
 				PED_EXCEPTION_IGNORE_CANCEL,
@@ -1057,12 +1077,18 @@ read_table (PedDisk* disk, PedSector sector, int is_extended_table)
 			continue;	/* avoid infinite recursion */
 		}
 
-		if (is_extended_table)
+		if (is_extended_table) {
+      TQ84_DEBUG("is_extended_table -> type = PED_PARTITION_LOGICAL");
 			type = PED_PARTITION_LOGICAL;
-		else if (raw_part_is_extended (raw_part))
+    }
+		else if (raw_part_is_extended (raw_part)) {
+      TQ84_DEBUG("raw_part_is_extended -> type = PED_PARTITION_EXTENDED");
 			type = PED_PARTITION_EXTENDED;
-		else
+    }
+		else {
+      TQ84_DEBUG("type = PED_PARTITION_NORMAL");
 			type = PED_PARTITION_NORMAL;
+    }
 
     TQ84_DEBUG("Calling raw_part_parse");
 		part = raw_part_parse (disk, raw_part, lba_offset, type);
@@ -1115,6 +1141,7 @@ read_table (PedDisk* disk, PedSector sector, int is_extended_table)
 	}
 
 read_ok:
+  TQ84_DEBUG("read_ok: returning 1");
 	free (label);
 	return 1;
 
@@ -1131,8 +1158,9 @@ msdos_read (PedDisk* disk)
 	PED_ASSERT (disk != NULL);
 	PED_ASSERT (disk->dev != NULL);
 
+  TQ84_DEBUG("Calling ped_disk_delete_all(disk) (to remove and destroy all partitions on disk)");
 	ped_disk_delete_all (disk);
-  TQ84_DEBUG("calling read_table");
+  TQ84_DEBUG("calling read_table (sector = 0, is_extended_table = 0)");
 	if (!read_table (disk, 0, 0))
 		return 0;
 
