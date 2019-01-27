@@ -42,6 +42,10 @@
 #include <parted/parted.h>
 #include <parted/debug.h>
 
+#define TQ84_DEBUG_ENABLED
+#define TQ84_DEBUG_TO_FILE
+#include "../../tq84-c-debug/tq84_debug.h"
+
 #if ENABLE_NLS
 #  include <libintl.h>
 #  define _(String) dgettext (PACKAGE, String)
@@ -288,6 +292,7 @@ int
 ped_geometry_read (const PedGeometry* geom, void* buffer, PedSector offset,
 		   PedSector count)
 {
+  TQ84_DEBUG_INDENT_T("ped_geometry_read, geom->start = %d, offset = %llu", geom->start, offset);
 	PedSector	real_start;
 
 	PED_ASSERT (geom != NULL);

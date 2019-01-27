@@ -1,5 +1,17 @@
 
-TODO: Apparently, msdos_read is the next function to check.
+CHS 2 LBA
+
+  ped_geometry_read
+
+  raw_part_is_lba
+
+  libparted/cs/probe_filesystem_for_geom
+  find »Assigned sectors = « in out  
+
+https://en.wikipedia.org/wiki/Extended_boot_record#cite_ref-ebrxp_7-0
+
+
+Almost DONE: Apparently, msdos_read is the next function to check.
 
 CHS -> LBA: https://de.wikipedia.org/wiki/Cylinder_Head_Sector
 
@@ -22,6 +34,8 @@ libparted/disk.c writes:
 `PedDiskTypeFeature` is a bitmap of supported features, such as PED_DISK_TYPE_EXTENDED, PED_DISK_TYPE_PARTITION_NAME etc.
 
 **`PedGeometry`** defines a geometry (that is: start sector, length (or count?) of sectors and end sector) and is defined in `include/parted/geom.h`.
+
+**`PedCHSGeometry`** include/parted/device.h
 
 **`PedFileSystemType`** describes the type of a file system: `include/parted/filesys.h`
 

@@ -557,17 +557,24 @@ partition_check_bios_geometry (PedPartition* part, PedCHSGeometry* bios_geom)
 	PED_ASSERT (part->disk_specific != NULL);
 	dos_data = part->disk_specific;
 
-	if (!dos_data->orig)
+	if (!dos_data->orig) {
+    TQ84_DEBUG("!dos_data -> orig, return 1");
 		return 1;
+  }
 
 	disk = part->disk;
 	leg_start = legacy_start (disk, bios_geom, &dos_data->orig->raw_part);
 	leg_end = legacy_end (disk, bios_geom, &dos_data->orig->raw_part);
 
-	if (leg_start && leg_start != dos_data->orig->geom.start)
+	if (leg_start && leg_start != dos_data->orig->geom.start) {
+    TQ84_DEBUG("leg_start && leg_start != dos_data->orig->geom.start, return 0");
 		return 0;
-	if (leg_end && leg_end != dos_data->orig->geom.end)
+  }
+	if (leg_end && leg_end != dos_data->orig->geom.end) {
+    TQ84_DEBUG("return 0");
 		return 0;
+  }
+  TQ84_DEBUG("return 1");
 	return 1;
 }
 
@@ -620,18 +627,25 @@ probe_filesystem_for_geom (const PedPartition* part, PedCHSGeometry* bios_geom)
 
 	found = 0;
 	for (i = 0; ms_types[i]; i++) {
-		if (!strcmp(ms_types[i], part->fs_type->name))
+    TQ84_DEBUG("ms_types[%d] = %s", i, ms_types[i]);
+		if (!strcmp(ms_types[i], part->fs_type->name)) {
+      TQ84_DEBUG("found");
 			found = 1;
+    }
 	}
-	if (!found)
+	if (!found) {
+    TQ84_DEBUG("!not found, goto end");
 		goto end;
+  }
 
-	if (!ped_geometry_read(&part->geom, buf, 0, 1))
+	if (!ped_geometry_read(&part->geom, buf, 0, 1)) 
 		goto end;
 
 	/* shared by the start of all Microsoft file systems */
 	sectors = buf[0x18] + (buf[0x19] << 8);
 	heads = buf[0x1a] + (buf[0x1b] << 8);
+
+  TQ84_DEBUG("Assigned sectors = %d, heads = %d", sectors, heads);
 
 	if (sectors < 1 || sectors > 63)
 		goto end;
@@ -940,6 +954,7 @@ raw_part_is_hidden (const DosRawPartition* raw_part)
 static int _GL_ATTRIBUTE_PURE
 raw_part_is_lba (const DosRawPartition* raw_part)
 {
+  TQ84_DEBUG_INDENT_T("raw_part_is_lba");
 	PED_ASSERT (raw_part != NULL);
 
 	switch (raw_part->type) {
@@ -948,9 +963,11 @@ raw_part_is_lba (const DosRawPartition* raw_part)
 	case PARTITION_EXT_LBA:
 	case PARTITION_FAT32_LBA_H:
 	case PARTITION_FAT16_LBA_H:
+    TQ84_DEBUG("return 1");
 		return 1;
 
 	default:
+    TQ84_DEBUG("return 0");
 		return 0;
 	}
 
@@ -1021,6 +1038,8 @@ read_table (PedDisk* disk, PedSector sector, int is_extended_table)
   TQ84_DEBUG("Found 'table' (of type DosRawTable)");
         table = (DosRawTable *) label;
 
+  TQ84_DEBUG("table magic: %x", table->magic);
+
 	/* weird: empty extended partitions are filled with 0xf6 by PM */
 	if (is_extended_table
 	    && PED_LE16_TO_CPU (table->magic) == PARTITION_MAGIC_MAGIC)
@@ -1029,6 +1048,7 @@ read_table (PedDisk* disk, PedSector sector, int is_extended_table)
   TQ84_DEBUG("! read_ok !");
 
 #ifndef DISCOVER_ONLY
+  TQ84_DEBUG("not def DISCOVER_ONLY");
 	if (PED_LE16_TO_CPU (table->magic) != MSDOS_MAGIC) {
     TQ84_DEBUG("!= MSDOS_MAGIC");
 		if (ped_exception_throw (
@@ -1076,6 +1096,7 @@ read_table (PedDisk* disk, PedSector sector, int is_extended_table)
 				goto error;
 			continue;	/* avoid infinite recursion */
 		}
+    TQ84_DEBUG("Apparently linear_start != sector");
 
 		if (is_extended_table) {
       TQ84_DEBUG("is_extended_table -> type = PED_PARTITION_LOGICAL");
@@ -1118,7 +1139,9 @@ read_table (PedDisk* disk, PedSector sector, int is_extended_table)
 	if (is_extended_table) {
     TQ84_DEBUG("is_extended_table");
 		/* process the nested extended partitions */
+  { TQ84_DEBUG_INDENT_T("Process nested extended partitions, for i = 0 .. DOS_N_PRI_PARTITIONS");
 		for (i = 0; i < DOS_N_PRI_PARTITIONS; i++) {
+      TQ84_DEBUG_INDENT_T("i = %d", i);
 			PedSector part_start;
 
 			raw_part = &table->partitions [i];
@@ -1127,8 +1150,11 @@ read_table (PedDisk* disk, PedSector sector, int is_extended_table)
 
 			lba_offset = ped_disk_extended_partition
 					(disk)->geom.start;
+
 			part_start = linear_start (disk, raw_part, lba_offset);
+      TQ84_DEBUG("lba_offset now: %llu, part_start = %llu", lba_offset, part_start);
 			if (part_start == sector) {
+          TQ84_DEBUG("recursive");
 				/* recursive table - already threw an
 				 * exception above.
 				 */
@@ -1138,6 +1164,7 @@ read_table (PedDisk* disk, PedSector sector, int is_extended_table)
 			if (!read_table (disk, part_start, 1))
 				goto error;
 		}
+   }
 	}
 
 read_ok:
